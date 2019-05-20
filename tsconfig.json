@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "sourceMap": true,
+    "target": "esnext",
+    "moduleResolution": "node",
+    "types": ["node"],
+    "outDir": "lib",
+    "module": "commonjs"
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "**/*.spec.ts"]
+}
