@@ -1,5 +1,5 @@
 /**
- * Auther: John Hooks
+ * Author: John Hooks
  * URL: https://github.com/johnhooks/laprf
  * Version: 0.1.0
  *
@@ -19,8 +19,8 @@
  * along with LapRFJavaScript.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { DEBUG } from "./Constant";
+declare let DEBUG: boolean;
 
-export function log(message) {
-  if (DEBUG) console.log(message);
+export function log(message: string): void {
+  if (DEBUG !== undefined) console.log(message);
 }

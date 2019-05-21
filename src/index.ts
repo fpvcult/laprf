@@ -1,5 +1,5 @@
 /**
- * Auther: John Hooks
+ * Author: John Hooks
  * URL: https://github.com/johnhooks/laprf
  * Version: 0.1.0
  *
@@ -20,26 +20,35 @@
  */
 
 import { Socket } from "net";
+import { Writable, WritableOptions } from "stream";
 
 import Unescape from "./Unescape";
 import Verify from "./Verify";
-import Parse from "./Parse";
+import Decode from "./Decode";
 
 import * as Debug from "./Debug";
 
-const client = new Socket();
+export default class LapRF extends Writable {
+  private socket: Socket;
 
-const unescape = new Unescape();
-const verify = new Verify();
-const parse = new Parse();
+  constructor(port: number = 5403, address: string = "192.168.1.9") {
+    super({ objectMode: true });
 
-parse.on("data", console.log);
+    this.socket = new Socket();
 
-client
-  .pipe(unescape)
-  .pipe(verify)
-  .pipe(parse);
+    this.socket
+      .pipe(new Unescape())
+      .pipe(new Verify())
+      .pipe(new Decode())
+      .pipe(this);
 
-client.connect(5403, "192.168.1.9", () => {
-  Debug.log("connected");
-});
+    this.socket.connect(port, address, () => {
+      Debug.log("connected");
+    });
+  }
+
+  _write(chunk: object, encoding: any, done: Function) {
+    // To implement
+    done();
+  }
+}

@@ -1,5 +1,5 @@
 /**
- * Auther: John Hooks
+ * Author: John Hooks
  * URL: https://github.com/johnhooks/laprf
  * Version: 0.1.0
  *
@@ -20,8 +20,7 @@
  */
 
 import { Transform, TransformOptions } from "stream";
-import { Result, SOR, EOR, ESC, ESC_OFFSET } from "./Constant";
-import { isOk, isErr } from "./util";
+import { SOR, EOR, ESC, ESC_OFFSET } from "./Const";
 
 import * as Debug from "./Debug";
 
@@ -42,8 +41,6 @@ export class UnescapeError extends Error {
   }
 }
 
-type UnescapedResult = Result<IUnescapedRecord, UnescapeError>;
-
 export default class Unescape extends Transform {
   private recordCount: number = 0;
   private packetCount: number = 0;
@@ -55,30 +52,27 @@ export default class Unescape extends Transform {
 
   _transform(raw: Buffer, encoding: BufferEncoding, done: Function) {
     let packet = Buffer.isBuffer(raw) ? raw : new Buffer(raw, encoding);
-    let result: UnescapedResult;
+    let unescaped: IUnescapedRecord;
     let byteOffset = 0;
     Debug.log(`Raw Packet Length: ${packet.length}`);
-    loop: while (true) {
-      result = this.collectRecord(packet, byteOffset);
-      if (isOk(result)) {
-        const { record } = result.value;
-        this.push(record);
-        byteOffset = result.value.byteOffset;
+    try {
+      loop: while (true) {
+        unescaped = this.collectRecord(packet, byteOffset);
+        this.push(unescaped.record);
+        byteOffset = unescaped.byteOffset;
         this.recordCount++;
-        Debug.log(`Record Length: ${record.length}`);
+        Debug.log(`Record Length: ${unescape.length}`);
         Debug.log(`Total Record Count: ${this.recordCount}`);
-      } else if (isErr(result)) {
-        const { error } = result;
-        switch (error.code) {
-          case ErrorCode.MissingEOR:
-            Debug.log("Never found EOR after finding SOR");
-            break;
-          case ErrorCode.MissingSOR:
-            // The ethernet packets do not include more than one record
-            // at a time. I don't know if the bluetooth LapRF will.
-            break;
-        }
-        break loop;
+      }
+    } catch (error) {
+      switch (error.code) {
+        case ErrorCode.MissingEOR:
+          Debug.log("Never found EOR after finding SOR");
+          break;
+        case ErrorCode.MissingSOR:
+          // The ethernet packets do not include more than one record
+          // at a time. I don't know if the bluetooth LapRF will.
+          break;
       }
     }
     this.packetCount++;
@@ -91,7 +85,7 @@ export default class Unescape extends Transform {
    * @param packet Raw data packet received from LapRF
    * @param byteOffset Current buffer offset
    */
-  private collectRecord(packet: Buffer, byteOffset: number): UnescapedResult {
+  private collectRecord(packet: Buffer, byteOffset: number): IUnescapedRecord {
     let byte: number;
     let escaped: boolean = false;
     const record = [];
@@ -112,7 +106,7 @@ export default class Unescape extends Transform {
             case EOR: // Found the End Of Record
               record.push(byte);
               byteOffset++;
-              return { value: { record: Buffer.from(record), byteOffset } };
+              return { record: Buffer.from(record), byteOffset };
             case ESC:
               escaped = true;
               break;
@@ -122,9 +116,9 @@ export default class Unescape extends Transform {
         }
       }
       // Never found the End Of Record
-      return { error: new UnescapeError(ErrorCode.MissingEOR) };
+      throw new UnescapeError(ErrorCode.MissingEOR);
     }
     // Never found the Start Of Record
-    return { error: new UnescapeError(ErrorCode.MissingSOR) };
+    throw new UnescapeError(ErrorCode.MissingSOR);
   }
 }

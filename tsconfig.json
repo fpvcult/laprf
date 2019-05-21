@@ -5,7 +5,10 @@
     "moduleResolution": "node",
     "types": ["node"],
     "outDir": "lib",
-    "module": "commonjs"
+    "module": "commonjs",
+    "forceConsistentCasingInFileNames": true,
+    "noImplicitReturns": true,
+    "noImplicitAny": true
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "**/*.spec.ts"]

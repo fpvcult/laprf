@@ -1,5 +1,5 @@
 /**
- * Auther: John Hooks
+ * Author: John Hooks
  * URL: https://github.com/johnhooks/laprf
  * Version: 0.1.0
  *
@@ -54,7 +54,7 @@ export enum RecordType {
   error = 0xffff
 }
 
-export enum RFSetupField {
+export const enum RFSetupField {
   slotIndex = 0x01,
   enabled = 0x20,
   channel = 0x21,
@@ -64,7 +64,7 @@ export enum RFSetupField {
   frequency = 0x25
 }
 
-export enum RssiField {
+export const enum RssiField {
   slotIndex = 0x01,
   minRssi = 0x20,
   maxRssi = 0x21,
@@ -75,18 +75,18 @@ export enum RssiField {
   unknown2 = 0x26
 }
 
-export enum StateControlField {
+export const enum StateControlField {
   gateState = 0x20
 }
 
-export enum SettingsField {
+export const enum SettingsField {
   statusInterval = 0x22,
   minLapTime = 0x26
 }
 
 // DescriptorField
 
-export enum PassingField {
+export const enum PassingField {
   slotIndex = 0x01,
   rtcTime = 0x02,
   decoderId = 0x20,
@@ -95,7 +95,7 @@ export enum PassingField {
   flags = 0x23
 }
 
-export enum StatusField {
+export const enum StatusField {
   slotIndex = 0x01,
   flags = 0x03,
   batteryVoltage = 0x21,
@@ -104,7 +104,7 @@ export enum StatusField {
   detectionCount = 0x24
 }
 
-export enum TimeField {
+export const enum TimeField {
   rtcTime = 0x02,
   timeRtcTime = 0x20
 }
@@ -118,82 +118,15 @@ export enum GateState {
   shutdown = 0xfe // Reset?
 }
 
-export type FieldSignature =
-  | RFSetupField
-  | RssiField
-  | PassingField
-  | SettingsField
-  | StateControlField
-  | StatusField
-  | TimeField;
-
 // ErrorFieldMap
 // DescriptorField
 
-export const RssiFieldMap = new Map([
-  [RssiField.slotIndex, u8],
-  [RssiField.minRssi, f32],
-  [RssiField.maxRssi, f32],
-  [RssiField.meanRssi, f32],
-  [RssiField.unknown1, u32],
-  [RssiField.unknown2, u32]
-  // RssiField.customRate
-  // RssiField.packetRate
-]);
-
-export const RFSetupFieldMap = new Map([
-  [RFSetupField.slotIndex, u8],
-  [RFSetupField.enabled, u16],
-  [RFSetupField.channel, u16],
-  [RFSetupField.band, u16],
-  [RFSetupField.gain, u16],
-  [RFSetupField.frequency, u16],
-  [RFSetupField.threshold, f32]
-]);
-
-export const StateControlFieldMap = new Map([
-  [StateControlField.gateState, u8]
-]);
-
-export const SettingsFieldMap = new Map([
-  [SettingsField.minLapTime, u32]
-  // SettingsField.statusInterval
-]);
-
-export const PassingFieldMap = new Map([
-  [PassingField.slotIndex, u8],
-  [PassingField.rtcTime, u64],
-  [PassingField.decoderId, u32],
-  [PassingField.passingNumber, u32],
-  [PassingField.peakHeight, u16],
-  [PassingField.flags, u16]
-]);
-
-export const StatusFieldMap = new Map([
-  [StatusField.slotIndex, u8],
-  [StatusField.flags, u16],
-  [StatusField.batteryVoltage, u16],
-  [StatusField.lastRSSI, f32],
-  [StatusField.gateState, u8],
-  [StatusField.detectionCount, u32]
-]);
-
-export const TimeFieldMap = new Map([
-  [TimeField.rtcTime, u64],
-  [TimeField.timeRtcTime, u64]
-]);
-
 export interface IRecord {
-  type: RecordType;
+  type: string;
   fields: IField[];
 }
 
 export interface IField {
-  signature: FieldSignature; // TODO make this a string.
+  type: string;
   data: number;
 }
-
-export type Ok<T> = { value: T };
-export type Err<T extends Error> = { error: T };
-
-export type Result<T, E extends Error> = Ok<T> | Err<E>;

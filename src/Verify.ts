@@ -1,5 +1,5 @@
 /**
- * Auther: John Hooks
+ * Author: John Hooks
  * URL: https://github.com/johnhooks/laprf
  * Version: 0.1.0
  *
