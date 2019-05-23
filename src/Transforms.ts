@@ -21,7 +21,7 @@
 
 import { Transform, TransformOptions } from "stream";
 
-import { u8, u16, Binary } from "./Binary";
+import { u8, u16, u32, u64, Binary } from "./Binary";
 import {
   SOR,
   EOR,
@@ -32,11 +32,11 @@ import {
   IField,
   MAX_RECORD_LEN
 } from "./Const";
-import { LapRFError, Crc } from "./Util";
-import { RecordReader } from "./RecordReader";
+import { LapRFError, Crc, readRaw } from "./Util";
 import { lookup, isFieldDescriptor } from "./Signature";
 
 import * as Debug from "./Debug";
+import { sign } from "crypto";
 
 interface IUnpackagedRecord {
   record: Buffer;
@@ -69,7 +69,7 @@ export class Unpackage extends Transform {
     try {
       loop: while (true) {
         unescaped = this.collectRecord(packet, byteOffset);
-        this.push(unescaped.record);
+        this.push(unescaped.record); // Push each unpackaged record
         byteOffset = unescaped.byteOffset;
         this.recordCount++;
         Debug.log(`Record Length: ${unescaped.record.length}`);
@@ -212,21 +212,40 @@ export class Decode extends Transform {
   _transform(raw: Buffer, _encoding: BufferEncoding, done: Function) {
     try {
       const fields: IField[] = [];
-      const record = new RecordReader(raw, 5); // Begin before recordType field
-      const recordType = record.read(u16);
+      const binary = new Binary(raw, 5); // Begin before recordType field
+      const recordType = binary.read(u16);
       if (recordType in RecordType) {
         Debug.log(`RecordType: ${RecordType[recordType]}`);
         loop: while (true) {
-          const signature = record.read(u8);
+          const signature = binary.read(u8);
           if (signature === EOR) break loop;
+          const size = binary.read(u8);
           let descriptor = lookup(recordType, signature);
           if (isFieldDescriptor(descriptor)) {
-            const { name, dataType } = descriptor;
-            const data = record.decodeData(dataType);
-            Debug.log(`${name}: ${data}`);
-            fields.push({ type: name, data });
+            const { name, numberType } = descriptor;
+            if (numberType.byteLength === size) {
+              const data = binary.read(numberType);
+              Debug.log(`${name}: ${data}`);
+              fields.push({ type: name, data });
+            } else {
+              throw new LapRFError(
+                ErrorCode.SizeError,
+                `[0x${recordType} 0x${signature}] Unrecognized size field: ${size}`
+              );
+            }
           } else {
-            record.decodeUnknown(signature);
+            let data = readRaw(binary, size);
+            if (typeof data === "string") {
+              const r = recordType.toString(16);
+              const s = signature.toString(16);
+              throw new LapRFError(
+                ErrorCode.SizeError,
+                `[0x${r}] Unrecognized signature 0x${s}, ${data}`
+              );
+            }
+            Debug.log(
+              `Unrecognized Signature 0x${signature.toString(16)}: ${data}`
+            );
           }
         }
       } else {
