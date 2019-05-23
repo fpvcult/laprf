@@ -1,22 +1,28 @@
-import { NumberType, u8, u16, u32, u64, f32, f64 } from "./Const";
+/**
+ * Author: John Hooks
+ * URL: https://github.com/johnhooks/laprf
+ * Version: 0.1.0
+ *
+ * This file is part of LapRFJavaScript.
+ *
+ * LapRFJavaScript is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * LapRFJavaScript is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with LapRFJavaScript.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+import { NumberType, u8, u16, u32, u64, f32, f64, ErrorCode } from "./Const";
+import { LapRFError } from "./Util";
 import { BufferReader } from "./BufferReader";
-import * as debug from "./Debug";
-
-export const enum ErrorCode {
-  SizeError,
-  UnknownRecordType,
-  UnknownSignatureType
-}
-
-export class RecordError extends Error {
-  constructor(
-    readonly code: ErrorCode,
-    message: string = "An error occured while parsing"
-  ) {
-    super(message);
-    Object.setPrototypeOf(this, RecordError.prototype);
-  }
-}
+import * as Debug from "./Debug";
 
 export class RecordReader extends BufferReader {
   constructor(buffer: Buffer, byteOffset: number = 0) {
@@ -26,7 +32,8 @@ export class RecordReader extends BufferReader {
   public decodeData(type: NumberType): number {
     const size = this.read(u8);
     if (verifyNumber(type, size)) return this.read(type);
-    throw new RecordError(ErrorCode.SizeError);
+    const msg = `Unknown field data size ${size}`;
+    throw new LapRFError(ErrorCode.SizeError, msg);
   }
 
   public skipField(): void {
@@ -34,7 +41,7 @@ export class RecordReader extends BufferReader {
     if (size === 1 || size === 2 || size === 4 || size === 8) {
       this.advance(size);
     } else {
-      throw new RecordError(ErrorCode.SizeError);
+      throw new LapRFError(ErrorCode.SizeError);
     }
   }
 
@@ -56,9 +63,9 @@ export class RecordReader extends BufferReader {
         break;
       default:
         const msg = `Unknown field data size ${size}`;
-        throw new RecordError(ErrorCode.SizeError, msg);
+        throw new LapRFError(ErrorCode.SizeError, msg);
     }
-    debug.log(`Signature 0x${signature.toString(16)}: ${data}`);
+    Debug.log(`Signature 0x${signature.toString(16)}: ${data}`);
     return data;
   }
 }

@@ -22,33 +22,32 @@
 import { Socket } from "net";
 import { Writable, WritableOptions } from "stream";
 
-import Unescape from "./Unescape";
-import Verify from "./Verify";
-import Decode from "./Decode";
+import { Unescape, Verify, Decode } from "./Transforms";
+import { PacketWriter } from "./PacketWriter";
 
-import * as Debug from "./Debug";
+import { IRecord } from "./Const";
+import { IRaceTimer, IPassingRecord } from "./Interface";
+
+// import * as Debug from "./Debug";
 
 export default class LapRF extends Writable {
-  private socket: Socket;
+  private writer: PacketWriter;
 
-  constructor(port: number = 5403, address: string = "192.168.1.9") {
+  constructor(client: Socket) {
     super({ objectMode: true });
 
-    this.socket = new Socket();
-
-    this.socket
+    client
       .pipe(new Unescape())
       .pipe(new Verify())
       .pipe(new Decode())
       .pipe(this);
 
-    this.socket.connect(port, address, () => {
-      Debug.log("connected");
-    });
+    this.writer = new PacketWriter();
   }
 
-  _write(chunk: object, encoding: any, done: Function) {
+  _write(record: IRecord, _encoding: any, done: Function) {
     // To implement
+    console.log(record);
     done();
   }
 }
