@@ -111,8 +111,7 @@ export class Unpackage extends Transform {
         byte = packet.readUInt8(byteOffset);
         if (escaped) {
           escaped = false;
-          byte - ESC_OFFSET;
-          this.buffer.write(u8, byte);
+          this.buffer.write(u8, byte - ESC_OFFSET);
         } else {
           switch (byte) {
             case EOR: // Found the End Of Record
