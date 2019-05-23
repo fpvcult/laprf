@@ -19,8 +19,13 @@
  * along with LapRFJavaScript.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-declare let DEBUG: boolean;
+import chalk from "chalk";
+import { DEBUG } from "./Const";
 
 export function log(message: string): void {
   if (DEBUG !== undefined) console.log(message);
+}
+
+export function warn(msg: string): void {
+  if (DEBUG !== undefined) console.log(chalk`[{yellow Warning}] ${msg}`);
 }

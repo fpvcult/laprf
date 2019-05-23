@@ -21,6 +21,14 @@
 
 export const DEBUG: boolean = true;
 
+export const enum ErrorCode {
+  MissingSOR,
+  MissingEOR,
+  SizeError,
+  UnknownRecordType,
+  UnknownSignatureType
+}
+
 export enum NumberType {
   u8,
   u16,
@@ -36,6 +44,8 @@ export const u32 = NumberType.u32;
 export const u64 = NumberType.u64;
 export const f32 = NumberType.f32;
 export const f64 = NumberType.f64;
+
+export const MAX_SLOTS = 8;
 
 export const SOR = 0x5a;
 export const EOR = 0x5b;
@@ -54,7 +64,7 @@ export enum RecordType {
   error = 0xffff
 }
 
-export const enum RFSetupField {
+export enum RFSetupField {
   slotIndex = 0x01,
   enabled = 0x20,
   channel = 0x21,
