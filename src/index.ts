@@ -22,11 +22,10 @@
 import { Socket } from "net";
 import { Writable, WritableOptions } from "stream";
 
-import { Unescape, Verify, Decode } from "./Transforms";
+import { Unpackage, Verify, Decode } from "./Transforms";
 import { PacketWriter } from "./PacketWriter";
 
 import { IRecord } from "./Const";
-import { IRaceTimer, IPassingRecord } from "./Interface";
 
 // import * as Debug from "./Debug";
 
@@ -37,7 +36,7 @@ export default class LapRF extends Writable {
     super({ objectMode: true });
 
     client
-      .pipe(new Unescape())
+      .pipe(new Unpackage())
       .pipe(new Verify())
       .pipe(new Decode())
       .pipe(this);

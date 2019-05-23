@@ -21,6 +21,8 @@
 
 export const DEBUG: boolean = true;
 
+export const MAX_RECORD_LEN = 1024;
+
 export const enum ErrorCode {
   MissingSOR,
   MissingEOR,

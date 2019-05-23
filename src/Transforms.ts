@@ -1,15 +1,36 @@
+/**
+ * Author: John Hooks
+ * URL: https://github.com/johnhooks/laprf
+ * Version: 0.1.0
+ *
+ * This file is part of LapRFJavaScript.
+ *
+ * LapRFJavaScript is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * LapRFJavaScript is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with LapRFJavaScript.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 import { Transform, TransformOptions } from "stream";
 
+import { u8, u16, Binary } from "./Binary";
 import {
-  u8,
-  u16,
   SOR,
   EOR,
   ESC,
   ESC_OFFSET,
   ErrorCode,
   RecordType,
-  IField
+  IField,
+  MAX_RECORD_LEN
 } from "./Const";
 import { LapRFError, Crc } from "./Util";
 import { RecordReader } from "./RecordReader";
@@ -17,12 +38,21 @@ import { lookup, isFieldDescriptor } from "./Signature";
 
 import * as Debug from "./Debug";
 
-interface IUnescapedRecord {
+interface IUnpackagedRecord {
   record: Buffer;
   byteOffset: number;
 }
 
-export class Unescape extends Transform {
+/**
+ * Split packets received from a LapRF into individual unescaped records.
+ */
+export class Unpackage extends Transform {
+  /**
+   * A reusable buffer for assembling seperated, unescaped LapRF records.
+   *
+   * NOTE: Probably way more than necessary... but its only 8kB
+   */
+  private buffer = new Binary(MAX_RECORD_LEN * 8);
   private recordCount: number = 0;
   private packetCount: number = 0;
 
@@ -33,7 +63,7 @@ export class Unescape extends Transform {
 
   _transform(raw: Buffer, encoding: BufferEncoding, done: Function) {
     let packet = Buffer.isBuffer(raw) ? raw : new Buffer(raw, encoding);
-    let unescaped: IUnescapedRecord;
+    let unescaped: IUnpackagedRecord;
     let byteOffset = 0;
     Debug.log(`Raw Packet Length: ${packet.length}`);
     try {
@@ -42,17 +72,20 @@ export class Unescape extends Transform {
         this.push(unescaped.record);
         byteOffset = unescaped.byteOffset;
         this.recordCount++;
-        Debug.log(`Record Length: ${unescape.length}`);
+        Debug.log(`Record Length: ${unescaped.record.length}`);
         Debug.log(`Total Record Count: ${this.recordCount}`);
       }
     } catch (error) {
       switch (error.code) {
         case ErrorCode.MissingEOR:
-          Debug.log("Never found EOR after finding SOR");
+          Debug.warn("Never found EOR after finding SOR");
           break;
         case ErrorCode.MissingSOR:
-          // The ethernet packets do not include more than one record
-          // at a time. I don't know if the bluetooth LapRF will.
+          if (byteOffset === 0) {
+            Debug.warn("Received a packet with no record");
+          }
+          // Else the all of the records have been collected from the packet.
+          // The error was just to break out of the `loop`.
           break;
       }
     }
@@ -62,37 +95,35 @@ export class Unescape extends Transform {
   }
 
   /**
-   * Collect and unescape LapRF Record from `packet`
-   * @param packet Raw data packet received from LapRF
-   * @param byteOffset Current buffer offset
+   * Collect and unescape a LapRF Record from `packet`
+   * @param packet Raw data packet received from a LapRF.
+   * @param byteOffset Current offset within  the raw `packet`.
    */
-  private collectRecord(packet: Buffer, byteOffset: number): IUnescapedRecord {
+  private collectRecord(packet: Buffer, byteOffset: number): IUnpackagedRecord {
     let byte: number;
     let escaped: boolean = false;
-    const record = [];
+    byteOffset = packet.indexOf(SOR, byteOffset); // Find the Start Of Record
+    this.buffer.byteOffset = 0; // Reset the record building buffer
 
-    let start = packet.indexOf(SOR, byteOffset);
-
-    if (start > -1) {
+    if (byteOffset > -1) {
       // Found the Start Of Record
-      let byteOffset = start;
-      let length = packet.length;
-      for (; byteOffset < length; byteOffset++) {
+      for (let len = packet.length; byteOffset < len; byteOffset++) {
         byte = packet.readUInt8(byteOffset);
         if (escaped) {
           escaped = false;
-          record.push(byte - ESC_OFFSET);
+          byte - ESC_OFFSET;
+          this.buffer.write(u8, byte);
         } else {
           switch (byte) {
             case EOR: // Found the End Of Record
-              record.push(byte);
+              this.buffer.write(u8, byte);
               byteOffset++;
-              return { record: Buffer.from(record), byteOffset };
+              return { record: Buffer.from(this.buffer.raw), byteOffset };
             case ESC:
               escaped = true;
               break;
             default:
-              record.push(byte);
+              this.buffer.write(u8, byte);
           }
         }
       }
@@ -101,6 +132,44 @@ export class Unescape extends Transform {
     }
     // Never found the Start Of Record
     throw new LapRFError(ErrorCode.MissingSOR);
+  }
+}
+
+/**
+ * Package a chunk of records into a packet to be sent to a LapRF.
+ */
+export class Package extends Transform {
+  /**
+   * Reusable buffer used to build an escaped LapRF packet.
+   *
+   * NOTE: Probably way more than necessary... but its only 8kB
+   */
+  private buffer = Buffer.alloc(MAX_RECORD_LEN * 8);
+
+  constructor(options: TransformOptions = {}) {
+    // Calls the stream.Writable(options) constructor
+    super(options);
+  }
+
+  _transform(chunk: Buffer, _encoding: BufferEncoding, done: Function) {
+    let byte: number;
+    let byteOffset = 0;
+    for (let i = 0, len = chunk.length; i < len; i++) {
+      byte = chunk.readUInt8(i);
+      if (
+        (byte === ESC || byte === SOR || byte === EOR) &&
+        i !== 0 &&
+        i !== len - 1
+      ) {
+        this.buffer.writeUInt8(ESC, byteOffset++);
+        this.buffer.writeUInt8(byte + ESC_OFFSET, byteOffset++);
+      } else {
+        this.buffer.writeUInt8(byte, byteOffset++);
+      }
+    }
+    // TODO: Figure out if it is acceptable to push a view of the buffer instead of a copy.
+    this.push(Buffer.from(this.buffer.slice(0, byteOffset)));
+    done();
   }
 }
 
@@ -118,7 +187,7 @@ export class Verify extends Transform {
     }
     // SOR has already been found;
     const length = record.readInt16LE(1);
-    Debug.log(`Record Length Entry: ${length}`);
+    Debug.log(`Record Length Field: ${length}`);
     const crcRecord = record.readUInt16LE(3);
     record.writeUInt16LE(0, 3); // Zero the CRC before computing
     const crcComputed = Crc.compute(record);
@@ -129,7 +198,7 @@ export class Verify extends Transform {
       done();
     } else {
       this.crcMismatchCount++;
-      Debug.log(`CRC mismatch  rx: ${crcRecord}  calc: ${crcComputed}`);
+      Debug.warn(`CRC mismatch  rx: ${crcRecord}  calc: ${crcComputed}`);
       done();
     }
   }
@@ -174,7 +243,7 @@ export class Decode extends Transform {
         Debug.warn(error.message);
       } else if (error instanceof LapRFError) {
         switch (error.code) {
-          // Possibly handle the issues here.
+          // Possibly handle the issues here...
           default:
             Debug.warn(error.message);
         }

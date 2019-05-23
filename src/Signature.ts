@@ -18,8 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with LapRFJavaScript.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-import { NumberType, u8, u16, u32, u64, f32, RecordType } from "./Const";
+import { NumberType, u8, u16, u32, u64, f32 } from "./Binary";
+import { RecordType } from "./Const";
 
 type FieldArgs = [number, NumberType, string];
 type RecordTypeArgs = [number, string, FieldArgs[]];

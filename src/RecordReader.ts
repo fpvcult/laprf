@@ -19,29 +19,34 @@
  * along with LapRFJavaScript.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { NumberType, u8, u16, u32, u64, f32, f64, ErrorCode } from "./Const";
+import { Binary, NumberType, u8, u16, u32, u64 } from "./Binary";
+import { ErrorCode } from "./Const";
 import { LapRFError } from "./Util";
-import { BufferReader } from "./BufferReader";
 import * as Debug from "./Debug";
 
-export class RecordReader extends BufferReader {
+export class RecordReader extends Binary {
   constructor(buffer: Buffer, byteOffset: number = 0) {
     super(buffer, byteOffset);
   }
 
   public decodeData(type: NumberType): number {
     const size = this.read(u8);
-    if (verifyNumber(type, size)) return this.read(type);
-    const msg = `Unknown field data size ${size}`;
-    throw new LapRFError(ErrorCode.SizeError, msg);
+    if (type.byteLength === size) return this.read(type);
+    throw new LapRFError(
+      ErrorCode.SizeError,
+      `Unrecognized field data size ${size}`
+    );
   }
 
   public skipField(): void {
     const size = this.read(u8);
     if (size === 1 || size === 2 || size === 4 || size === 8) {
-      this.advance(size);
+      this.byteOffset = this.byteOffset + size;
     } else {
-      throw new LapRFError(ErrorCode.SizeError);
+      throw new LapRFError(
+        ErrorCode.SizeError,
+        `Unrecognized field data size ${size}`
+      );
     }
   }
 
@@ -65,27 +70,7 @@ export class RecordReader extends BufferReader {
         const msg = `Unknown field data size ${size}`;
         throw new LapRFError(ErrorCode.SizeError, msg);
     }
-    Debug.log(`Signature 0x${signature.toString(16)}: ${data}`);
+    Debug.log(`Unknown Signature 0x${signature.toString(16)}: ${data}`);
     return data;
   }
-}
-
-export function verifyNumber(type: NumberType, size: number): boolean {
-  switch (type) {
-    case u8:
-      if (size === 1) return true;
-      break;
-    case u16:
-      if (size === 2) return true;
-      break;
-    case u32:
-    case f32:
-      if (size === 4) return true;
-      break;
-    case u64:
-    case f64:
-      if (size === 8) return true;
-      break;
-  }
-  return false;
 }
