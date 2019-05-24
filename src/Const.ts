@@ -31,22 +31,6 @@ export const enum ErrorCode {
   UnknownSignatureType
 }
 
-export enum NumberType {
-  u8,
-  u16,
-  u32,
-  u64,
-  f32,
-  f64
-}
-
-export const u8 = NumberType.u8;
-export const u16 = NumberType.u16;
-export const u32 = NumberType.u32;
-export const u64 = NumberType.u64;
-export const f32 = NumberType.f32;
-export const f64 = NumberType.f64;
-
 export const MAX_SLOTS = 8;
 
 export const SOR = 0x5a;

@@ -20,13 +20,6 @@
  */
 
 import {
-  u8,
-  u16,
-  u32,
-  u64,
-  f32,
-  f64,
-  NumberType,
   SOR,
   EOR,
   ESC,
@@ -36,6 +29,7 @@ import {
   TimeField,
   SettingsField
 } from "./Const";
+import { u8, u16, u32, u64, f32, f64, NumberType, Binary } from "./Binary";
 import { Crc } from "./Util";
 import * as Debug from "./Debug";
 import { ISetupSlot } from "./Interface";
@@ -126,13 +120,12 @@ export class PacketWriter {
     const buffer = this.buffer.slice(0, length);
     const crc = Crc.compute(buffer);
     this.write(u16, crc); // Should work
-    Debug.log(`Packet: ${buffer.readUInt16LE(3)}  computed: ${crc}`);
     return escape(buffer);
   }
 
   private writeField(type: NumberType, signature: number, data: number) {
     this.write(u8, signature);
-    this.write(u8, getDataTypeSize(type));
+    this.write(u8, type.byteLength);
     this.write(type, data);
   }
 
@@ -182,19 +175,4 @@ function escape(buffer: Buffer) {
     }
   }
   return Buffer.from(escaped);
-}
-
-function getDataTypeSize(type: NumberType): number {
-  switch (type) {
-    case u8:
-      return 1;
-    case u16:
-      return 2;
-    case u32:
-    case f32:
-      return 4;
-    case u64:
-    case f64:
-      return 8;
-  }
 }
