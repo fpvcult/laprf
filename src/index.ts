@@ -19,34 +19,24 @@
  * along with LapRFJavaScript.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { Socket } from "net";
-import { Writable, WritableOptions } from "stream";
+import { Duplex } from "stream";
 
-import { Unpackage, Verify, Decode } from "./Transforms";
-import { PacketWriter } from "./PacketWriter";
-
+import { Serial } from "./Serial";
 import { IRecord } from "./Const";
 
-// import * as Debug from "./Debug";
+export default class LapRF extends Duplex {
+  private serial = new Serial();
 
-export default class LapRF extends Writable {
-  private writer: PacketWriter;
-
-  constructor(client: Socket) {
-    super({ objectMode: true });
-
-    client
-      .pipe(new Unpackage())
-      .pipe(new Verify())
-      .pipe(new Decode())
-      .pipe(this);
-
-    this.writer = new PacketWriter();
+  constructor() {
+    super(/* { objectMode: true } */);
   }
 
-  _write(record: IRecord, _encoding: any, done: Function) {
-    // To implement
-    console.log(record);
+  _write(packet: Buffer, _encoding: any, done: Function) {
+    // TODO: implement what to do with the records.
+    const records: IRecord[] = this.serial.deserialize(packet);
+    records.forEach(record => {
+      console.log(record);
+    });
     done();
   }
 }

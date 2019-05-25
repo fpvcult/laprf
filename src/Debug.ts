@@ -20,12 +20,23 @@
  */
 
 import chalk from "chalk";
-import { DEBUG } from "./Const";
+import { DEBUG, RecordType } from "./Const";
 
 export function log(message: string): void {
   if (DEBUG !== undefined) console.log(message);
 }
 
 export function warn(msg: string): void {
-  if (DEBUG !== undefined) console.log(chalk`[{yellow Warning}] ${msg}`);
+  console.log(chalk`[{yellow Warning}] ${msg}`);
 }
+
+export const Msg = Object.freeze({
+  unknowSignature(recordType: number, signature: number) {
+    let msg = `Unknown signature 0x${signature.toString(16)}, found on `;
+    msg +=
+      recordType in RecordType
+        ? `RecordType.${RecordType[recordType]}`
+        : `an unknown record type 0x${recordType.toString(16)}`;
+    return msg;
+  }
+});

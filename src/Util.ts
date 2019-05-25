@@ -19,18 +19,7 @@
  * along with LapRFJavaScript.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ErrorCode } from "./Const";
 import { u8, u16, u32, u64, Binary } from "./Binary";
-
-export class LapRFError extends Error {
-  constructor(
-    readonly code: ErrorCode,
-    message: string = "An error occured while parsing"
-  ) {
-    super(message);
-    Object.setPrototypeOf(this, LapRFError.prototype);
-  }
-}
 
 export namespace Crc {
   const crc16_table: Uint16Array = (function() {
@@ -78,25 +67,4 @@ export namespace Crc {
 
     return reflect(remainder, 16);
   }
-}
-
-export function readRaw(binary: Binary, size: number): number | string {
-  let data: number;
-  switch (size) {
-    case 1:
-      data = binary.read(u8);
-      break;
-    case 2:
-      data = binary.read(u16);
-      break;
-    case 4:
-      data = binary.read(u32);
-      break;
-    case 8:
-      data = binary.read(u64);
-      break;
-    default:
-      return `Unrecognized size field: ${size}`;
-  }
-  return data;
 }

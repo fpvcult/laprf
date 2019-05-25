@@ -27,6 +27,9 @@ interface IWriteNumber {
   (value: number, byteOffset: number): number;
 }
 
+/**
+ * A class to help build serial protocol schemas.
+ */
 export class NumberType {
   constructor(
     readonly byteLength: number,
@@ -35,24 +38,38 @@ export class NumberType {
   ) {}
 }
 
+/**
+ * An Unsigned 8 Bit Integer
+ */
 export const u8 = new NumberType(
   1,
   Buffer.prototype.readUInt8,
   Buffer.prototype.writeUInt8
 );
 
+/**
+ * An Unsigned 16 Bit Integer
+ */
 export const u16 = new NumberType(
   2,
   Buffer.prototype.readUInt16LE,
   Buffer.prototype.writeUInt16LE
 );
 
+/**
+ * An Unsigned 32 Bit Integer
+ */
 export const u32 = new NumberType(
   4,
   Buffer.prototype.readUInt32LE,
   Buffer.prototype.writeUInt32LE
 );
 
+/**
+ * An Unsigned 64 Bit Integer
+ *
+ * Consider using BigInt.
+ */
 export const u64 = new NumberType(
   8,
 
@@ -74,12 +91,18 @@ export const u64 = new NumberType(
   }
 );
 
+/**
+ * A 32 Bit Floating Point Number
+ */
 export const f32 = new NumberType(
   4,
   Buffer.prototype.readFloatLE,
   Buffer.prototype.writeFloatLE
 );
 
+/**
+ * A 64 Bit Floating Point Number
+ */
 export const f64 = new NumberType(
   8,
   Buffer.prototype.readDoubleLE,
@@ -89,7 +112,7 @@ export const f64 = new NumberType(
 /**
  * A Node.js Buffer wrapper.
  *
- * Intended for serializing data using a predefined schema.
+ * Intended for serializing/deserializing data using a predefined schema.
  */
 export class Binary {
   private _buffer: Buffer;
@@ -104,7 +127,7 @@ export class Binary {
     if (buffer instanceof Buffer) {
       if (!(byteOffset < buffer.length) || byteOffset < 0) {
         throw new RangeError(
-          "Provide byteOffset is not within the range of the provided buffer"
+          "Provide byteOffset is not within the range of the buffer"
         );
       }
       this._buffer = buffer.slice(byteOffset, buffer.length); // Create a new view
@@ -115,10 +138,23 @@ export class Binary {
     }
   }
 
+  /**
+   * @returns The length of the wrapped buffer.
+   */
+  get length(): number {
+    return this._buffer.length;
+  }
+
+  /**
+   * @returns The current read/write byte position in the wrapped buffer.
+   */
   get byteOffset(): number {
     return this._byteOffset;
   }
 
+  /**
+   * Set the read/write byte position of the wrapped buffer to `value`.
+   */
   set byteOffset(value: number) {
     this._byteOffset = value;
     if (!(this._byteOffset < this._buffer.length) || this._byteOffset < 0) {
@@ -127,23 +163,51 @@ export class Binary {
   }
 
   /**
-   * @returns A buffer view upto the current `byteOffset`.
+   * @returns The raw buffer.
    */
   get raw(): Buffer {
+    return this._buffer;
+  }
+
+  /**
+   * @returns A buffer view upto the current `byteOffset`.
+   */
+  slice(): Buffer {
     return this._buffer.slice(0, this._byteOffset);
   }
 
   /**
    *
-   * @param type The number type of `value`.
+   * @param source The buffer from which to copy.
+   * @param sourceStart The offset within `source` from which to begin copying.
+   * @param sourceEnd The offset within `source` from which to stop copying (not inclucive).
+   * @returns The current offset of the wrapped buffer.
+   */
+  copy(source: Buffer, sourceStart: number, sourceEnd: number) {
+    return (this._byteOffset += source.copy(
+      this._buffer,
+      this._byteOffset,
+      sourceStart,
+      sourceEnd
+    ));
+  }
+
+  /**
+   *
+   * @param type The [[NumberType]] of `value`.
    * @param value The value to be written to the buffer
-   * @returns The current byteOffset of the buffer after the write
+   * @returns The current offset of the buffer after the write
    */
   write(type: NumberType, value: number): number {
     this._byteOffset = type.write.call(this._buffer, value, this._byteOffset);
     return this._byteOffset;
   }
 
+  /**
+   *
+   * @param type The [[NumberType]] to read from the buffer.
+   * @returns The value read from the buffer.
+   */
   read(type: NumberType) {
     const value = type.read.call(this._buffer, this._byteOffset);
     this._byteOffset += type.byteLength;

@@ -16,5 +16,5 @@
     "out": "docs"
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "**/*.spec.ts"]
+  "exclude": ["node_modules", "**/*.spec.ts", "src/scratch.ts"]
 }
