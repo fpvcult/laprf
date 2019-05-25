@@ -1,6 +1,6 @@
 {
-  "name": "laprf",
-  "description": "An ImmersionRC LapRF binary protocol JavaScript adapter",
+  "name": "laprf-serial-protocol",
+  "description": "A Typescript LapRF Protocol Library",
   "repository": "github:johnhooks/laprfjs",
   "version": "0.1.0",
   "main": "lib/index.js",

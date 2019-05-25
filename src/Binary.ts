@@ -3,20 +3,20 @@
  * URL: https://github.com/johnhooks/laprf
  * Version: 0.1.0
  *
- * This file is part of LapRFJavaScript.
+ * This file is part of LapRFSerialProtocol.
  *
- * LapRFJavaScript is free software: you can redistribute it and/or modify
+ * LapRFSerialProtocol is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * LapRFJavaScript is distributed in the hope that it will be useful,
+ * LapRFSerialProtocol is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with LapRFJavaScript.  If not, see <http://www.gnu.org/licenses/>.
+ * along with LapRFSerialProtocol.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 interface IReadNumber {
@@ -177,19 +177,14 @@ export class Binary {
   }
 
   /**
-   *
+   * Insert the contents of another buffer into the wrapped buffer starting at the current offset.
+   * Does not move the byte offset.
    * @param source The buffer from which to copy.
    * @param sourceStart The offset within `source` from which to begin copying.
    * @param sourceEnd The offset within `source` from which to stop copying (not inclucive).
-   * @returns The current offset of the wrapped buffer.
    */
-  copy(source: Buffer, sourceStart: number, sourceEnd: number) {
-    return (this._byteOffset += source.copy(
-      this._buffer,
-      this._byteOffset,
-      sourceStart,
-      sourceEnd
-    ));
+  insert(source: Buffer, sourceStart: number, sourceEnd: number): void {
+    source.copy(this._buffer, this._byteOffset, sourceStart, sourceEnd);
   }
 
   /**
