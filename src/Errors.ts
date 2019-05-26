@@ -1,6 +1,6 @@
 /**
  * Author: John Hooks
- * URL: https://github.com/johnhooks/laprf
+ * URL: https://github.com/johnhooks/laprf-serial-protocol
  * Version: 0.1.0
  *
  * This file is part of LapRFSerialProtocol.

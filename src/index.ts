@@ -1,6 +1,6 @@
 /**
  * Author: John Hooks
- * URL: https://github.com/johnhooks/laprf
+ * URL: https://github.com/johnhooks/laprf-serial-protocol
  * Version: 0.1.0
  *
  * This file is part of LapRFSerialProtocol.
@@ -19,21 +19,22 @@
  * along with LapRFSerialProtocol.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import {
-  SOR,
-  EOR,
-  ESC,
-  ESC_OFFSET,
-  IRecord,
-  IField,
-  MAX_RECORD_LEN,
-  RecordType
-} from "./Const";
+import { SOR, EOR, ESC, ESC_OFFSET, MAX_RECORD_LEN, RecordType } from "./Const";
 import { u8, u16, NumberType, Binary } from "./Binary";
 import { Crc } from "./Util";
 import * as Debug from "./Debug";
 import * as Schema from "./Schema";
 import { SizeError, RecordTypeError, SerialError } from "./Errors";
+
+export interface IRecord {
+  type: string;
+  fields: IField[];
+}
+
+export interface IField {
+  type: string;
+  data: number;
+}
 
 /**
  * A class to serialize/deserialize LapRF protocol packets.
@@ -44,20 +45,19 @@ export default class LapRFSerialProtocol extends Binary {
   }
 
   /**
-   * Serialize a JavaScript object into a LapRF record.
-   *
-   * @param record A JavaScript object to serialize into a LapRF record.
+   * Serialize an object implementing [[IRecord]] into a LapRF record.
+   * @param record An object to serialize into a LapRF record.
    */
   serialize(record: IRecord): Buffer {
     const recordType = Schema.findRecordTypeByName(record.type);
-    if (Schema.isRecordDescriptor(recordType)) {
+    if (recordType !== undefined) {
       this.startRecord(recordType.code);
       record.fields.forEach(field => {
         const fieldType = Schema.findFieldTypeByName(
           recordType.name,
           field.type
         );
-        if (Schema.isFieldDescriptor(fieldType)) {
+        if (fieldType !== undefined) {
           this.writeField(fieldType.numberType, fieldType.code, field.data);
         } else {
           Debug.warn(`Unrecongized Field Type: ${field.type}`);
@@ -70,13 +70,12 @@ export default class LapRFSerialProtocol extends Binary {
   }
 
   /**
-   * Deserialize a LapRF packet into an array of JavaScript objects.
-   *
+   * Deserialize a LapRF packet into an array of objects implementing [[IRecord]].
    * @param packet A packet received from a LapRF to deserialize.
    * @returns An array of JavaScript objects conforming to the IRecord interface.
    */
   deserialize(packet: Buffer): IRecord[] {
-    const records = this.unescapePacket(packet).filter(varifyRecord);
+    const records = this.unescapePacket(packet).filter(verifyRecord);
     const deserialized: IRecord[] = [];
     records.forEach(record => {
       const result = this.deserializeRecord(record);
@@ -87,7 +86,6 @@ export default class LapRFSerialProtocol extends Binary {
 
   /**
    * Initialize the serialization of a LapRF record.
-   *
    * @param recordType The [[RecordType]] of the record to initialize.
    */
   private startRecord(recordType: RecordType): void {
@@ -99,8 +97,7 @@ export default class LapRFSerialProtocol extends Binary {
   }
 
   /**
-   * Finish serializing a LapRF record.
-   *
+   * Finish the serialization of a LapRF record.
    * @returns A Buffer containing the completed, escaped record.
    */
   private finishRecord(): Buffer {
@@ -115,7 +112,6 @@ export default class LapRFSerialProtocol extends Binary {
 
   /**
    * Serialize a field of a LapRF record.
-   *
    * @param type The [[NumberType]] to use to write the `data` into the field.
    * @param signature The protocol signature of the field.
    * @param data The data of the field.
@@ -128,9 +124,8 @@ export default class LapRFSerialProtocol extends Binary {
 
   /**
    * Escape a LapRF record.
-   *
    * @param record The record to escape.
-   * @returns The escaped contents of `record`.
+   * @returns A buffer containing the escaped contents of the `record`.
    */
   private escapeRecord(record: Buffer): Buffer {
     let byte: number;
@@ -153,8 +148,7 @@ export default class LapRFSerialProtocol extends Binary {
 
   /**
    * Unescaped a LapRF packet.
-   *
-   * @param packet Raw packet received from LapRF, may contain multiple records
+   * @param packet Raw packet received from LapRF, may contain multiple records.
    * @returns An array of buffers containing unescaped records.
    */
   private unescapePacket(packet: Buffer): Buffer[] {
@@ -193,11 +187,16 @@ export default class LapRFSerialProtocol extends Binary {
     return records;
   }
 
+  /**
+   * Deserialize a LapRF record into an object implementing [[IRecord]].
+   * @param raw A binary record, unescaped, verified and ready to be deserialized.
+   */
   private deserializeRecord(raw: Buffer): IRecord | undefined {
     try {
       const fields: IField[] = [];
 
-      // Setup the internal buffer to read the record, starting at the record type field
+      // Setup the internal buffer to read the record
+      // Start before the record type field
       this.byteOffset = 0;
       this.insert(raw, 5, raw.length);
       const recordType = this.read(u16);
@@ -210,9 +209,9 @@ export default class LapRFSerialProtocol extends Binary {
           const size = this.read(u8);
           let fieldType = Schema.findFieldTypeByCode(recordType, signature);
 
-          if (Schema.isFieldDescriptor(fieldType)) {
+          if (fieldType !== undefined) {
             if (fieldType.numberType.byteLength === size) {
-              // `signature` and `size` are valid, read the data from the buffer
+              // `signature` and `size` are valid.
               const data = this.read(fieldType.numberType);
               fields.push({ type: fieldType.name, data });
             } else {
@@ -224,7 +223,7 @@ export default class LapRFSerialProtocol extends Binary {
             if (isValidSize(size)) {
               // `size` is valid, but will not attempt parse the data of an unknown signature
               this.byteOffset = this.byteOffset + size;
-              Debug.warn(Debug.Msg.unknowSignature(recordType, signature));
+              Debug.warn(Debug.Msg.unknownSignature(recordType, signature));
             } else {
               // `size` is also invalid
               throw new SizeError(recordType, signature, size, false);
@@ -237,7 +236,7 @@ export default class LapRFSerialProtocol extends Binary {
       return { type: RecordType[recordType], fields };
     } catch (error) {
       if (error instanceof RangeError) {
-        throw new SerialError("Reached the end of packet unexpectedly");
+        throw new SerialError("Reached the end of record unexpectedly");
       } else if (error.prototype instanceof SerialError) {
         Debug.warn(error.message);
       } else {
@@ -249,13 +248,12 @@ export default class LapRFSerialProtocol extends Binary {
 }
 
 /**
- * Varify a LapRF record.
+ * Verify a LapRF record for length and perform a cyclic redundancy check (CRC).
  * WARNING: The `record` is modified in order to verify the CRC.
- *
  * @param record A LapRF record to verify.
  * @returns Whether or not the `record` can be verified.
  */
-function varifyRecord(record: Buffer): boolean {
+function verifyRecord(record: Buffer): boolean {
   if (record.length < 8 || record.length > MAX_RECORD_LEN) {
     return false;
   }

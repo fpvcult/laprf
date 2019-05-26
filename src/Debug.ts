@@ -1,6 +1,6 @@
 /**
  * Author: John Hooks
- * URL: https://github.com/johnhooks/laprf
+ * URL: https://github.com/johnhooks/laprf-serial-protocol
  * Version: 0.1.0
  *
  * This file is part of LapRFSerialProtocol.
@@ -31,7 +31,7 @@ export function warn(msg: string): void {
 }
 
 export const Msg = Object.freeze({
-  unknowSignature(recordType: number, signature: number) {
+  unknownSignature(recordType: number, signature: number) {
     let msg = `Unknown signature 0x${signature.toString(16)}, found on `;
     msg +=
       recordType in RecordType

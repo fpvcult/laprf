@@ -1,6 +1,6 @@
 /**
  * Author: John Hooks
- * URL: https://github.com/johnhooks/laprf
+ * URL: https://github.com/johnhooks/laprf-serial-protocol
  * Version: 0.1.0
  *
  * This file is part of LapRFSerialProtocol.
@@ -18,8 +18,6 @@
  * You should have received a copy of the GNU General Public License
  * along with LapRFSerialProtocol.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-import { u8, u16, u32, u64, Binary } from "./Binary";
 
 export namespace Crc {
   const crc16_table: Uint16Array = (function() {

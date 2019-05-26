@@ -1,6 +1,6 @@
 /**
  * Author: John Hooks
- * URL: https://github.com/johnhooks/laprf
+ * URL: https://github.com/johnhooks/laprf-serial-protocol
  * Version: 0.1.0
  *
  * This file is part of LapRFSerialProtocol.
@@ -86,7 +86,7 @@ export const enum StatusField {
   slotIndex = 0x01,
   flags = 0x03,
   batteryVoltage = 0x21,
-  lastRSSI = 0x22,
+  lastRssi = 0x22,
   gateState = 0x23,
   detectionCount = 0x24
 }
@@ -106,13 +106,3 @@ export enum GateState {
 }
 
 // DescriptorField
-
-export interface IRecord {
-  type: string;
-  fields: IField[];
-}
-
-export interface IField {
-  type: string;
-  data: number;
-}

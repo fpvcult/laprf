@@ -1,8 +1,9 @@
-# A Typescript LapRF Protocol Library
+# A Node.js LapRF Protocol Library
 
-_Under Development_
+_In Development_
 
-Serialization Library to serialize and deserialize binary messages from ImmersionRC FPV Devices.
+A library, written in TypeScript, to serialize and deserialize binary messages
+for communication with ImmersionRC LapRF devices.
 
 Inspired by:
 

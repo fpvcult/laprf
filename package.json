@@ -1,7 +1,7 @@
 {
   "name": "laprf-serial-protocol",
   "description": "A Typescript LapRF Protocol Library",
-  "repository": "github:johnhooks/laprfjs",
+  "repository": "github:johnhooks/laprf-serial-protocol",
   "version": "0.1.0",
   "main": "lib/index.js",
   "scripts": {

@@ -1,6 +1,6 @@
 /**
  * Author: John Hooks
- * URL: https://github.com/johnhooks/laprf
+ * URL: https://github.com/johnhooks/laprf-serial-protocol
  * Version: 0.1.0
  *
  * This file is part of LapRFSerialProtocol.
@@ -67,7 +67,6 @@ export const u32 = new NumberType(
 
 /**
  * An Unsigned 64 Bit Integer
- *
  * Consider using BigInt.
  */
 export const u64 = new NumberType(
@@ -111,7 +110,6 @@ export const f64 = new NumberType(
 
 /**
  * A Node.js Buffer wrapper.
- *
  * Intended for serializing/deserializing data using a predefined schema.
  */
 export class Binary {
@@ -120,8 +118,8 @@ export class Binary {
 
   /**
    *
-   * @param buffer Either a Buffer or the byte length of the buffer to create
-   * @param byteOffset Optionally, if a buffer was provided, a point to start in that buffer.
+   * @param buffer Either a Buffer or the byte length of which to create a new buffer.
+   * @param byteOffset Optionally, if a buffer is provided, an offset to start at.
    */
   constructor(buffer: Buffer | number, byteOffset: number = 0) {
     if (buffer instanceof Buffer) {
@@ -153,7 +151,8 @@ export class Binary {
   }
 
   /**
-   * Set the read/write byte position of the wrapped buffer to `value`.
+   *
+   * @param value The new offset to use within the buffer.
    */
   set byteOffset(value: number) {
     this._byteOffset = value;
@@ -177,8 +176,8 @@ export class Binary {
   }
 
   /**
-   * Insert the contents of another buffer into the wrapped buffer starting at the current offset.
-   * Does not move the byte offset.
+   * Insert the contents of another buffer into the wrapped buffer, starting
+   * at the current offset. NOTE: Does not move the offset.
    * @param source The buffer from which to copy.
    * @param sourceStart The offset within `source` from which to begin copying.
    * @param sourceEnd The offset within `source` from which to stop copying (not inclucive).
@@ -188,10 +187,9 @@ export class Binary {
   }
 
   /**
-   *
    * @param type The [[NumberType]] of `value`.
-   * @param value The value to be written to the buffer
-   * @returns The current offset of the buffer after the write
+   * @param value The value to be written to the buffer.
+   * @returns The current offset of the buffer after the write.
    */
   write(type: NumberType, value: number): number {
     this._byteOffset = type.write.call(this._buffer, value, this._byteOffset);
@@ -199,7 +197,6 @@ export class Binary {
   }
 
   /**
-   *
    * @param type The [[NumberType]] to read from the buffer.
    * @returns The value read from the buffer.
    */

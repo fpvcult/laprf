@@ -1,6 +1,6 @@
 /**
  * Author: John Hooks
- * URL: https://github.com/johnhooks/laprf
+ * URL: https://github.com/johnhooks/laprf-serial-protocol
  * Version: 0.1.0
  *
  * This file is part of LapRFSerialProtocol.
@@ -61,14 +61,14 @@ const {
       [0x21, f32, "maxRssi"],
       [0x22, f32, "meanRssi"],
       [0x23, u32, "unknown1"],
-      // [ 0x24, ?, "customRate" ],
-      // [ 0x25, ?, "packetRate" ],
+      [0x24, u8, "customRate"],
+      [0x25, u32, "packetRate"],
       [0x26, u32, "unknown2"]
     ]
   ],
 
   [
-    0xda02,
+    RecordType.rfSetup,
     "rfSetup",
     [
       [0x01, u8, "slotIndex"],
@@ -84,7 +84,7 @@ const {
   [0xda04, "stateControl", [[0x20, u8, "gateState"]]],
 
   [
-    0xda07,
+    RecordType.settings,
     "settings",
     [
       // [ 0x22, u8, "statusInterval" ],
@@ -95,7 +95,7 @@ const {
   // [ 0xda08, "descriptor", [] ]
 
   [
-    0xda09,
+    RecordType.passing,
     "passing",
     [
       [0x01, u8, "slotIndex"],
@@ -108,19 +108,23 @@ const {
   ],
 
   [
-    0xda0a,
+    RecordType.status,
     "status",
     [
       [0x01, u8, "slotIndex"],
       [0x03, u16, "flags"],
       [0x21, u16, "batteryVoltage"],
-      [0x22, f32, "lastRSSI"],
+      [0x22, f32, "lastRssi"],
       [0x23, u8, "gateState"],
       [0x24, u32, "detectionCount"]
     ]
   ],
 
-  [0xda0c, "time", [[0x02, u64, "rtcTime"], [0x20, u64, "timeRtcTime"]]]
+  [
+    RecordType.time,
+    "time",
+    [[0x02, u64, "rtcTime"], [0x20, u64, "timeRtcTime"]]
+  ]
 
   // [ 0xffff, "error", [] ]
 ]);
@@ -133,7 +137,6 @@ function genMaps(
   recordTypeByCode: CodeMap<RecordDescriptor>;
   recordTypeByName: NameMap<RecordDescriptor>;
 } {
-  const recordTypeMap: NameMap<RecordDescriptor> = {};
   const fieldTypeByCode: DeepCodeMap<FieldDescriptor> = {};
   const fieldTypeByName: DeepNameMap<FieldDescriptor> = {};
   const recordTypeByCode: CodeMap<RecordDescriptor> = {};
@@ -176,18 +179,6 @@ function genMaps(
     recordTypeByCode,
     recordTypeByName
   };
-}
-
-export function isFieldDescriptor(
-  item: FieldDescriptor | undefined
-): item is FieldDescriptor {
-  return item instanceof FieldDescriptor;
-}
-
-export function isRecordDescriptor(
-  item: RecordDescriptor | undefined
-): item is RecordDescriptor {
-  return item instanceof RecordDescriptor;
 }
 
 export function findFieldTypeByCode(
