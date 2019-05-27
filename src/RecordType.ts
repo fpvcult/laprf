@@ -80,6 +80,12 @@ export function get(key: string | number): RecordType | undefined {
     })
   ),
   new RecordType(
+    Signature.settings,
+    new Schema(s => {
+      s.u32(0x26, "minLapTime");
+    })
+  ),
+  new RecordType(
     Signature.passing,
     new Schema(s => {
       s.u8(0x01, "slotIndex");
