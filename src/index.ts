@@ -19,21 +19,23 @@
  * along with LapRFSerialProtocol.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { SOR, EOR, ESC, ESC_OFFSET, MAX_RECORD_LEN, RecordType } from "./Const";
-import { u8, u16, NumberType, Binary } from "./Binary";
-import { Crc } from "./Util";
-import * as Debug from "./Debug";
-import * as Schema from "./Schema";
-import { SizeError, RecordTypeError, SerialError } from "./Errors";
+import { u8, u16, Binary } from "./Binary";
+import * as RecordType from "./RecordType";
+import * as Serial from "./Serial";
+import { RecordTypeError } from "./Errors";
+import { Msg } from "./Util";
+
+export const MAX_RECORD_LEN = 1024;
+export const MAX_SLOTS = 8;
+
+export const SOR = 0x5a;
+export const EOR = 0x5b;
+export const ESC = 0x5c;
+export const ESC_OFFSET = 0x40;
 
 export interface IRecord {
   type: string;
-  fields: IField[];
-}
-
-export interface IField {
-  type: string;
-  data: number;
+  fields: Serial.RecordFields;
 }
 
 /**
@@ -45,28 +47,20 @@ export default class LapRFSerialProtocol extends Binary {
   }
 
   /**
-   * Serialize an object implementing [[IRecord]] into a LapRF record.
+   * Serialize an object implementing [[IRecord]] into a binary LapRF record.
    * @param record An object to serialize into a LapRF record.
    */
-  serialize(record: IRecord): Buffer {
-    const recordType = Schema.findRecordTypeByName(record.type);
+  encode(record: IRecord): Buffer {
+    const recordType = RecordType.get(record.type);
+
     if (recordType !== undefined) {
-      this.startRecord(recordType.code);
-      record.fields.forEach(field => {
-        const fieldType = Schema.findFieldTypeByName(
-          recordType.name,
-          field.type
-        );
-        if (fieldType !== undefined) {
-          this.writeField(fieldType.numberType, fieldType.code, field.data);
-        } else {
-          Debug.warn(`Unrecongized Field Type: ${field.type}`);
-        }
-      });
+      this.startRecord(recordType.signature);
+      Serial.encode(record.fields, this, recordType.schema);
+      return this.finishRecord();
     } else {
+      console.warn(Msg.unknownRecordType(record.type));
       throw new RecordTypeError(record.type);
     }
-    return this.finishRecord();
   }
 
   /**
@@ -74,26 +68,61 @@ export default class LapRFSerialProtocol extends Binary {
    * @param packet A packet received from a LapRF to deserialize.
    * @returns An array of JavaScript objects conforming to the IRecord interface.
    */
-  deserialize(packet: Buffer): IRecord[] {
-    const records = this.unescapePacket(packet).filter(verifyRecord);
-    const deserialized: IRecord[] = [];
-    records.forEach(record => {
-      const result = this.deserializeRecord(record);
-      if (result !== undefined) deserialized.push(result);
-    });
-    return deserialized;
+  decode(packet: Buffer): IRecord[] {
+    const decoded: IRecord[] = [];
+
+    try {
+      const records = this.splitRecords(packet);
+
+      for (let i = 0, len = records.length; i < len; i++) {
+        this.unescape(records[i]); // Escaped contents are stored in the internal buffer
+
+        if (verifyRecord(this.toBuffer())) {
+          const length = this.byteOffset;
+          this.byteOffset = 5; // Seek to the the record signature
+          const signature = this.read(u16);
+          const recordType = RecordType.get(signature);
+
+          if (recordType !== undefined) {
+            const fields: Serial.RecordFields = [];
+            const binaryFields = this.slice(this.byteOffset, length - 1);
+            const success = Serial.decode(
+              binaryFields,
+              fields,
+              recordType.schema
+            );
+
+            if (success) {
+              decoded.push({ type: recordType.name, fields });
+            } else {
+              console.warn(`Unable to decode record type '${recordType.name}'`);
+            }
+          } else {
+            console.warn(Msg.unknownRecordType(signature));
+          }
+        }
+      }
+    } catch (error) {
+      if (error instanceof RangeError) {
+        console.log("Something horrible went wrong!");
+      } else {
+        throw error;
+      }
+    }
+
+    return decoded;
   }
 
   /**
    * Initialize the serialization of a LapRF record.
    * @param recordType The [[RecordType]] of the record to initialize.
    */
-  private startRecord(recordType: RecordType): void {
-    this.byteOffset = 0; // reset the buffer
+  private startRecord(signature: number): void {
+    this.byteOffset = 0; // Reset the internal buffer
     this.write(u8, SOR);
     this.write(u16, 0); // Length placeholder
     this.write(u16, 0); // CRC placeholder
-    this.write(u16, recordType);
+    this.write(u16, signature);
   }
 
   /**
@@ -103,23 +132,11 @@ export default class LapRFSerialProtocol extends Binary {
   private finishRecord(): Buffer {
     this.write(u8, EOR);
     const length = this.byteOffset;
-    const packet = Buffer.from(this.slice()); // Copy... will need buffer for escaping
-    packet.writeUInt16LE(length, 1);
-    const crc = Crc.compute(packet);
-    packet.writeUInt16LE(crc, 3);
-    return this.escapeRecord(packet);
-  }
-
-  /**
-   * Serialize a field of a LapRF record.
-   * @param type The [[NumberType]] to use to write the `data` into the field.
-   * @param signature The protocol signature of the field.
-   * @param data The data of the field.
-   */
-  private writeField(type: NumberType, signature: number, data: number): void {
-    this.write(u8, signature);
-    this.write(u8, type.byteLength);
-    this.write(type, data);
+    const record = Buffer.from(this.toBuffer()); // Copy
+    record.writeUInt16LE(length, 1);
+    const crc = Serial.Crc.compute(record);
+    record.writeUInt16LE(crc, 3);
+    return this.escape(record);
   }
 
   /**
@@ -127,7 +144,7 @@ export default class LapRFSerialProtocol extends Binary {
    * @param record The record to escape.
    * @returns A buffer containing the escaped contents of the `record`.
    */
-  private escapeRecord(record: Buffer): Buffer {
+  private escape(record: Buffer): Buffer {
     let byte: number;
     this.byteOffset = 0; // Reset the buffer
     for (let i = 0, len = record.length; i < len; i++) {
@@ -143,107 +160,55 @@ export default class LapRFSerialProtocol extends Binary {
         this.write(u8, byte);
       }
     }
-    return Buffer.from(this.slice());
+    return Buffer.from(this.toBuffer());
   }
 
-  /**
-   * Unescaped a LapRF packet.
-   * @param packet Raw packet received from LapRF, may contain multiple records.
-   * @returns An array of buffers containing unescaped records.
-   */
-  private unescapePacket(packet: Buffer): Buffer[] {
-    let byte: number;
-    let escaped = false;
-    let collecting = false;
-    let records: Buffer[] = [];
-    this.byteOffset = 0; // Reset the buffer
-    for (let i = 0, len = packet.length; i < len; i++) {
-      byte = packet.readUInt8(i);
-      if (!collecting && byte === SOR) {
-        collecting = true;
-      }
-      if (collecting) {
-        if (escaped) {
-          escaped = false;
-          this.write(u8, byte - ESC_OFFSET);
+  private splitRecords(packet: Buffer): Buffer[] {
+    const records: Buffer[] = [];
+    let offset = 0;
+    while (true) {
+      const sor = packet.indexOf(SOR, offset);
+      if (sor > -1) {
+        offset = packet.indexOf(EOR, sor) + 1;
+        if (offset > -1) {
+          records.push(packet.slice(sor, offset));
         } else {
-          switch (byte) {
-            case EOR:
-              collecting = false;
-              this.write(u8, byte);
-              const record = Buffer.from(this.slice());
-              records.push(record);
-              this.byteOffset = 0; // Reset the buffer
-              break;
-            case ESC:
-              escaped = true;
-              break;
-            default:
-              this.write(u8, byte);
-          }
+          break;
         }
+      } else {
+        break;
       }
     }
     return records;
   }
 
   /**
-   * Deserialize a LapRF record into an object implementing [[IRecord]].
-   * @param raw A binary record, unescaped, verified and ready to be deserialized.
+   * Unescaped a LapRF packet and store the contents in the internal buffer.
+   * @param record Raw record received from a LapRF.
    */
-  private deserializeRecord(raw: Buffer): IRecord | undefined {
-    try {
-      const fields: IField[] = [];
-
-      // Setup the internal buffer to read the record
-      // Start before the record type field
-      this.byteOffset = 0;
-      this.insert(raw, 5, raw.length);
-      const recordType = this.read(u16);
-
-      if (recordType in RecordType) {
-        loop: while (true) {
-          const signature = this.read(u8);
-          if (signature === EOR) break loop;
-
-          const size = this.read(u8);
-          let fieldType = Schema.findFieldTypeByCode(recordType, signature);
-
-          if (fieldType !== undefined) {
-            if (fieldType.numberType.byteLength === size) {
-              // `signature` and `size` are valid.
-              const data = this.read(fieldType.numberType);
-              fields.push({ type: fieldType.name, data });
-            } else {
-              // `signature` is valid, `size` is invalid
-              throw new SizeError(recordType, signature, size);
-            }
-          } else {
-            // `signature` is invalid
-            if (isValidSize(size)) {
-              // `size` is valid, but will not attempt parse the data of an unknown signature
-              this.byteOffset = this.byteOffset + size;
-              Debug.warn(Debug.Msg.unknownSignature(recordType, signature));
-            } else {
-              // `size` is also invalid
-              throw new SizeError(recordType, signature, size, false);
-            }
-          }
+  private unescape(record: Buffer): void {
+    let byte: number;
+    let escaped = false;
+    this.byteOffset = 0; // Reset the buffer
+    for (let i = 0, len = record.length; i < len; i++) {
+      byte = record.readUInt8(i);
+      if (escaped) {
+        escaped = false;
+        this.write(u8, byte - ESC_OFFSET);
+      } else {
+        switch (byte) {
+          case EOR:
+            this.write(u8, byte);
+            return;
+          case ESC:
+            escaped = true;
+            break;
+          default:
+            this.write(u8, byte);
         }
-      } else {
-        throw new RecordTypeError(recordType);
-      }
-      return { type: RecordType[recordType], fields };
-    } catch (error) {
-      if (error instanceof RangeError) {
-        throw new SerialError("Reached the end of record unexpectedly");
-      } else if (error.prototype instanceof SerialError) {
-        Debug.warn(error.message);
-      } else {
-        throw error;
       }
     }
-    return undefined;
+    throw new Error("Unable to unescape the record");
   }
 }
 
@@ -251,23 +216,21 @@ export default class LapRFSerialProtocol extends Binary {
  * Verify a LapRF record for length and perform a cyclic redundancy check (CRC).
  * WARNING: The `record` is modified in order to verify the CRC.
  * @param record A LapRF record to verify.
- * @returns Whether or not the `record` can be verified.
+ * @returns Whether or not the `record` has been verified.
  */
 function verifyRecord(record: Buffer): boolean {
-  if (record.length < 8 || record.length > MAX_RECORD_LEN) {
-    return false;
-  }
-  // const length = record.readInt16LE(1);
+  const length = record.readInt16LE(1);
+  if (record.length !== length) console.warn("Record length mismatch");
+  if (record.length < 8 || record.length > MAX_RECORD_LEN) return false;
+
   const crcRecord = record.readUInt16LE(3);
   record.writeUInt16LE(0, 3); // Must zero the CRC before computing
-  const crcComputed = Crc.compute(record);
+  const crcComputed = Serial.Crc.compute(record);
+
   if (crcRecord === crcComputed) {
     return true;
   }
-  Debug.warn(`CRC mismatch  rx: ${crcRecord}  calc: ${crcComputed}`);
-  return false;
-}
 
-function isValidSize(size: number): boolean {
-  return size === 1 || size === 2 || size === 4 || size === 8;
+  console.warn(`CRC mismatch`);
+  return false;
 }

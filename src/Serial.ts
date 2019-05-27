@@ -19,25 +19,71 @@
  * along with LapRFSerialProtocol.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { NumberType } from "./Binary";
+import { u8, Binary } from "./Binary";
+import { Schema } from "./Schema";
+import { Msg } from "./Util";
 
-const indexes = Symbol("indexes");
+export type RecordFields = Array<[string, number]>;
 
-export interface IndexOf<T> {
-  [key: string]: T;
-  [index: number]: T;
+/**
+ * Encode an array of [[RecordFields]] into a binary LapRF record.
+ * @param source Array of record field data to encode.
+ * @param target Target to fill with binary data.
+ * @param schema The record type schema to use to encode the data.
+ */
+export function encode<T extends Binary>(
+  source: RecordFields,
+  target: T,
+  schema: Schema
+): void {
+  for (let i = 0, len = source.length; i < len; i++) {
+    const [name, data] = source[i];
+    const fieldType = schema.get(name);
+    if (fieldType !== undefined) {
+      const { signature, type } = fieldType;
+      target.write(u8, signature);
+      target.write(u8, type.byteLength);
+      target.write(type, data);
+    } else {
+      // console.warn(Msg.unknownFieldType(name));
+      throw new Error(`Unknown field type '${name}'`);
+    }
+  }
 }
 
-export class Index<T> {
-  public [indexes]: IndexOf<T> = {};
+/**
+ * Decode a binary LapRF record into an array of [[RecordFields]].
+ * @param source Binary LapRF record to decode.
+ * @param target Target to fill with record fields.
+ * @param schema The record type schema to use to decode the record.
+ * @returns Whether or not decoding was successful.
+ */
+export function decode<T extends Binary>(
+  source: T,
+  target: RecordFields,
+  schema: Schema
+): boolean {
+  const length = source.length;
 
-  set(signature: number, name: string, item: T) {
-    this[indexes][signature] = this[indexes][name] = item;
+  while (source.byteOffset < length) {
+    const signature = source.read(u8);
+    const size = source.read(u8);
+    const fieldType = schema.get(signature);
+    if (fieldType !== undefined) {
+      const { name, type } = fieldType;
+      if (size === type.byteLength) {
+        const data = source.read(type);
+        target.push([name, data]);
+      } else {
+        console.warn(Msg.sizeMismatch(size, type));
+        return false;
+      }
+    } else {
+      console.warn(Msg.unknownFieldType(signature));
+      return false;
+    }
   }
-
-  get(key: string | number): T | undefined {
-    return this[indexes][key];
-  }
+  return true;
 }
 
 export namespace Crc {
@@ -87,27 +133,3 @@ export namespace Crc {
     return reflect(remainder, 16);
   }
 }
-
-export const Msg = Object.freeze({
-  unknownRecordType(signature: number | string): string {
-    let msg = "Unknown record type: ";
-    if (typeof signature === "number") {
-      msg += `0x${signature.toString(16)}`;
-    } else {
-      msg += signature;
-    }
-    return msg;
-  },
-  unknownFieldType(signature: number | string) {
-    let msg = "Unknown field type: ";
-    if (typeof signature === "number") {
-      msg += `0x${signature.toString(16)}`;
-    } else {
-      msg += signature;
-    }
-    return msg;
-  },
-  sizeMismatch(size: number, type: NumberType) {
-    `Size Mismatch: recieved ${size}, expected ${type.byteLength}`;
-  }
-});

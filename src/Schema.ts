@@ -19,198 +19,72 @@
  * along with LapRFSerialProtocol.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { NumberType, u8, u16, u32, u64, f32 } from "./Binary";
-import { RecordType } from "./Const";
+import { u8, u16, u32, u64, f32, f64, NumberType } from "./Binary";
+import { IndexOf } from "./Util";
 
-// I am sure there is a cleaner way to do this. But I want all the
-// data about the protocol schema in one place rather than all through
-// the code. Interested in creating something more generic.
+/**
+ * Used to allow a SchemaBuilder to set the private indexes on its Schema
+ */
+const indexes = Symbol("indexes");
 
-class FieldDescriptor {
+class Field {
   constructor(
-    readonly code: number,
-    readonly numberType: NumberType,
     readonly name: string,
-    readonly recordType: RecordDescriptor
+    readonly type: NumberType,
+    readonly signature: number
   ) {}
 }
 
-class RecordDescriptor {
-  constructor(readonly code: number, readonly name: string) {}
-}
+class SchemaBuilder {
+  constructor(private schema: Schema) {}
 
-type FieldArgs = [number, NumberType, string];
-type RecordArgs = [number, string, FieldArgs[]];
-type CodeMap<T> = { [key: number]: T };
-type NameMap<T> = { [key: string]: T };
-type DeepCodeMap<T> = CodeMap<CodeMap<T>>;
-type DeepNameMap<T> = NameMap<NameMap<T>>;
-
-const {
-  fieldTypeByCode,
-  fieldTypeByName,
-  recordTypeByCode,
-  recordTypeByName
-} = genMaps([
-  [
-    RecordType.rssi,
-    "rssi",
-    [
-      [0x01, u8, "slotIndex"],
-      [0x20, f32, "minRssi"],
-      [0x21, f32, "maxRssi"],
-      [0x22, f32, "meanRssi"],
-      [0x23, u32, "unknown1"],
-      [0x24, u8, "customRate"],
-      [0x25, u32, "packetRate"],
-      [0x26, u32, "unknown2"]
-    ]
-  ],
-
-  [
-    RecordType.rfSetup,
-    "rfSetup",
-    [
-      [0x01, u8, "slotIndex"],
-      [0x20, u16, "enabled"],
-      [0x21, u16, "channel"],
-      [0x22, u16, "band"],
-      [0x23, f32, "threshold"],
-      [0x24, u16, "gain"],
-      [0x25, u16, "frequency"]
-    ]
-  ],
-
-  [0xda04, "stateControl", [[0x20, u8, "gateState"]]],
-
-  [
-    RecordType.settings,
-    "settings",
-    [
-      // [ 0x22, u8, "statusInterval" ],
-      [0x26, u32, "minLapTime"]
-    ]
-  ],
-
-  // [ 0xda08, "descriptor", [] ]
-
-  [
-    RecordType.passing,
-    "passing",
-    [
-      [0x01, u8, "slotIndex"],
-      [0x02, u64, "rtcTime"],
-      [0x20, u32, "decoderId"],
-      [0x21, u32, "passingNumber"],
-      [0x22, u16, "peakHeight"],
-      [0x23, u16, "flags"]
-    ]
-  ],
-
-  [
-    RecordType.status,
-    "status",
-    [
-      [0x01, u8, "slotIndex"],
-      [0x03, u16, "flags"],
-      [0x21, u16, "batteryVoltage"],
-      [0x22, f32, "lastRssi"],
-      [0x23, u8, "gateState"],
-      [0x24, u32, "detectionCount"]
-    ]
-  ],
-
-  [
-    RecordType.time,
-    "time",
-    [[0x02, u64, "rtcTime"], [0x20, u64, "timeRtcTime"]]
-  ]
-
-  // [ 0xffff, "error", [] ]
-]);
-
-function genMaps(
-  recordTypeArgs: Array<RecordArgs>
-): {
-  fieldTypeByCode: DeepCodeMap<FieldDescriptor>;
-  fieldTypeByName: DeepNameMap<FieldDescriptor>;
-  recordTypeByCode: CodeMap<RecordDescriptor>;
-  recordTypeByName: NameMap<RecordDescriptor>;
-} {
-  const fieldTypeByCode: DeepCodeMap<FieldDescriptor> = {};
-  const fieldTypeByName: DeepNameMap<FieldDescriptor> = {};
-  const recordTypeByCode: CodeMap<RecordDescriptor> = {};
-  const recordTypeByName: NameMap<RecordDescriptor> = {};
-
-  recordTypeArgs.forEach(args => {
-    const recordType = <RecordDescriptor>(
-      Reflect.construct(RecordDescriptor, args.slice(0, 2))
-    );
-
-    recordTypeByName[recordType.name] = recordType;
-    recordTypeByCode[recordType.code] = recordType;
-
-    const codedFields = <CodeMap<FieldDescriptor>>{};
-    const namedFields = <NameMap<FieldDescriptor>>{};
-
-    args[2].forEach(args => {
-      const field = <FieldDescriptor>(
-        Reflect.construct(FieldDescriptor, [...args, recordType])
-      );
-      codedFields[field.code] = field;
-      namedFields[field.name] = field;
-    });
-
-    Object.freeze(codedFields);
-    Object.freeze(namedFields);
-
-    fieldTypeByCode[recordType.code] = codedFields;
-    fieldTypeByName[recordType.name] = namedFields;
-  });
-
-  Object.freeze(fieldTypeByCode);
-  Object.freeze(fieldTypeByName);
-  Object.freeze(recordTypeByCode);
-  Object.freeze(recordTypeByName);
-
-  return {
-    fieldTypeByCode,
-    fieldTypeByName,
-    recordTypeByCode,
-    recordTypeByName
-  };
-}
-
-export function findFieldTypeByCode(
-  recordTypeCode: number,
-  fieldTypeCode: number
-): FieldDescriptor | undefined {
-  const obj = fieldTypeByCode[recordTypeCode];
-  if (obj !== undefined) {
-    return obj[fieldTypeCode];
+  u8(signature: number, name: string) {
+    this.addField(u8, name, signature);
   }
-  return undefined;
-}
 
-export function findFieldTypeByName(
-  recordTypeName: string,
-  fieldTypeName: string
-): FieldDescriptor | undefined {
-  const obj = fieldTypeByName[recordTypeName];
-  if (obj !== undefined) {
-    return obj[fieldTypeName];
+  u16(signature: number, name: string) {
+    this.addField(u16, name, signature);
   }
-  return undefined;
+
+  u32(signature: number, name: string) {
+    this.addField(u32, name, signature);
+  }
+
+  u64(signature: number, name: string) {
+    this.addField(u64, name, signature);
+  }
+
+  f32(signature: number, name: string) {
+    this.addField(f32, name, signature);
+  }
+
+  f64(signature: number, name: string) {
+    this.addField(f64, name, signature);
+  }
+
+  private addField(type: NumberType, name: string, signature: number) {
+    const field = new Field(name, type, signature);
+    if (Reflect.has(this.schema[indexes], name)) {
+      throw new Error(`Attempted to set name '${name}' twice`);
+    } else if (Reflect.has(this.schema[indexes], signature)) {
+      throw new Error(`Attempted to set signature '${signature}' twice`);
+    } else {
+      this.schema[indexes][name] = field;
+      this.schema[indexes][signature] = field;
+    }
+    this.schema[indexes][name] = field;
+  }
 }
 
-export function findRecordTypeByCode(
-  code: number
-): RecordDescriptor | undefined {
-  return recordTypeByCode[code];
-}
+export class Schema {
+  public [indexes]: IndexOf<Field> = {};
 
-export function findRecordTypeByName(
-  name: string
-): RecordDescriptor | undefined {
-  return recordTypeByName[name];
+  constructor(builder: (instance: SchemaBuilder) => void) {
+    const schemaBuilder: SchemaBuilder = new SchemaBuilder(this);
+    builder(schemaBuilder);
+  }
+
+  get(index: string | number): Field | undefined {
+    return this[indexes][index];
+  }
 }

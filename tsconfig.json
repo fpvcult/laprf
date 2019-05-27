@@ -5,6 +5,7 @@
     "moduleResolution": "node",
     "types": ["node"],
     "outDir": "lib",
+    "declaration": true,
     "module": "commonjs",
     "forceConsistentCasingInFileNames": true,
     "noImplicitReturns": true,

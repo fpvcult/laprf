@@ -67,6 +67,7 @@ export const u32 = new NumberType(
 
 /**
  * An Unsigned 64 Bit Integer
+ *
  * Consider using BigInt.
  */
 export const u64 = new NumberType(
@@ -110,6 +111,7 @@ export const f64 = new NumberType(
 
 /**
  * A Node.js Buffer wrapper.
+ *
  * Intended for serializing/deserializing data using a predefined schema.
  */
 export class Binary {
@@ -118,8 +120,8 @@ export class Binary {
 
   /**
    *
-   * @param buffer Either a Buffer or the byte length of which to create a new buffer.
-   * @param byteOffset Optionally, if a buffer is provided, an offset to start at.
+   * @param buffer Either a Buffer or the byte length of which to create a buffer.
+   * @param byteOffset Optionally, if a buffer was provided, a point to start in that buffer.
    */
   constructor(buffer: Buffer | number, byteOffset: number = 0) {
     if (buffer instanceof Buffer) {
@@ -137,6 +139,7 @@ export class Binary {
   }
 
   /**
+   * I don't think this is useful.
    * @returns The length of the wrapped buffer.
    */
   get length(): number {
@@ -144,15 +147,14 @@ export class Binary {
   }
 
   /**
-   * @returns The current read/write byte position in the wrapped buffer.
+   * @returns The current offset in the wrapped buffer.
    */
   get byteOffset(): number {
     return this._byteOffset;
   }
 
   /**
-   *
-   * @param value The new offset to use within the buffer.
+   * Set the current offset to `value`.
    */
   set byteOffset(value: number) {
     this._byteOffset = value;
@@ -169,27 +171,47 @@ export class Binary {
   }
 
   /**
-   * @returns A buffer view upto the current `byteOffset`.
+   * @returns A new Buffer view from the wrapped buffer, from 0 to the offset.
    */
-  slice(): Buffer {
+  toBuffer(): Buffer {
     return this._buffer.slice(0, this._byteOffset);
   }
 
   /**
-   * Insert the contents of another buffer into the wrapped buffer, starting
-   * at the current offset. NOTE: Does not move the offset.
+   * @returns A new Binary view of the wrapped buffer.
+   */
+  slice(start = 0, end = this._buffer.length): Binary {
+    return new Binary(this._buffer.slice(start, end));
+  }
+
+  /**
+   * Insert the contents of another buffer into the wrapped buffer starting at the current offset.
    * @param source The buffer from which to copy.
    * @param sourceStart The offset within `source` from which to begin copying.
    * @param sourceEnd The offset within `source` from which to stop copying (not inclucive).
+   * @param jump Whether or not to adjust the offset to the end position of the insert.
+   * @returns The end position of the insert.
    */
-  insert(source: Buffer, sourceStart: number, sourceEnd: number): void {
-    source.copy(this._buffer, this._byteOffset, sourceStart, sourceEnd);
+  insert(
+    source: Buffer,
+    sourceStart: number,
+    sourceEnd: number,
+    jump: boolean = false
+  ): number {
+    const byteCount = source.copy(
+      this._buffer,
+      this._byteOffset,
+      sourceStart,
+      sourceEnd
+    );
+    if (jump) return (this.byteOffset += byteCount);
+    return this.byteOffset + byteCount;
   }
 
   /**
    * @param type The [[NumberType]] of `value`.
-   * @param value The value to be written to the buffer.
-   * @returns The current offset of the buffer after the write.
+   * @param value The value to be written to the buffer
+   * @returns The current offset of the buffer after the write
    */
   write(type: NumberType, value: number): number {
     this._byteOffset = type.write.call(this._buffer, value, this._byteOffset);
