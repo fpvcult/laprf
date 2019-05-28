@@ -26,13 +26,14 @@ interface IRecord {
 
 `encode(record: IRecord): Buffer`
 
-Takes an object implementing `IRecord` and returns a `Buffer` encoded with the contents.
+Take an object implementing `IRecord` and return a `Buffer` encoded with the contents.
 
 ### Class Method: decode
 
-`decode(record: Buffer): IRecord`
+`decode(record: Buffer): IRecord[]`
 
-Takes a `Buffer` containing a LapRF record and returns an object implementing `IRecord`.
+Take a `Buffer` containing a LapRF record and return an array of objects implementing
+`IRecord` (A LapRF packet can contain more than one record).
 
 ## Example:
 
@@ -51,7 +52,14 @@ client.write(
     fields: [["minLapTime", 6000]]
   })
 );
+
+client.on("data", chunk => {
+  const records = laprf.decode(chunk);
+  // ... do something with the records
+});
 ```
+
+## Notes
 
 Inspired by:
 
