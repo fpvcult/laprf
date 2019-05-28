@@ -1,8 +1,8 @@
-import LapRFSerialProtocol, { SOR, EOR, ESC, ESC_OFFSET } from "./index";
+import LapRF, { SOR, EOR, ESC, ESC_OFFSET } from "./index";
 
-let laprf: any = new LapRFSerialProtocol();
+let laprf: any = new LapRF();
 
-describe("LapRFSerialProtocol#unescape", () => {
+describe("LapRF#unescape", () => {
   test("removes escapes", () => {
     const expected = Buffer.from([SOR, ESC, EOR]);
     laprf.unescape(Buffer.from([SOR, ESC, ESC + ESC_OFFSET, EOR]));
@@ -11,7 +11,7 @@ describe("LapRFSerialProtocol#unescape", () => {
   });
 });
 
-describe("LapRFSerialProtocol#escape", () => {
+describe("LapRF#escape", () => {
   test("places escapes", () => {
     const expected = Buffer.from([
       SOR,

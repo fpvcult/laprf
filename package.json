@@ -1,7 +1,7 @@
 {
-  "name": "laprf",
+  "name": "@fpvcult/laprf",
   "description": "A Node.js LapRF Protocol Library",
-  "repository": "github:johnhooks/laprf",
+  "repository": "github:fpvcult/laprf",
   "version": "0.1.0",
   "main": "lib/index.js",
   "types": "./lib/index.d.ts",
@@ -13,8 +13,6 @@
   },
   "scripts": {
     "build": "tsc -p .",
-    "start": "npm run build:live",
-    "build:live": "nodemon --watch 'src/**/*.ts' --exec 'ts-node' src/index.ts",
     "test": "jest"
   },
   "author": "John Hooks <bitmachina@outlook.com>",

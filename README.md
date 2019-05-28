@@ -39,7 +39,7 @@ interface IRecord {
 
 ```typescript
 import { Socket } from "net";
-import LapRFP, { IRecord } from "./index";
+import LapRF, { IRecord } from "./index";
 
 const client = new Socket();
 const laprf = new LapRF();
