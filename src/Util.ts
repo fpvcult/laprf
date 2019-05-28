@@ -1,25 +1,25 @@
 /**
  * Author: John Hooks
- * URL: https://github.com/johnhooks/laprf-serial-protocol
+ * URL: https://github.com/johnhooks/laprf
  * Version: 0.1.0
  *
- * This file is part of LapRFSerialProtocol.
+ * This file is part of LapRF Protocol.
  *
- * LapRFSerialProtocol is free software: you can redistribute it and/or modify
+ * LapRF Protocol is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * LapRFSerialProtocol is distributed in the hope that it will be useful,
+ * LapRF Protocol is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with LapRFSerialProtocol.  If not, see <http://www.gnu.org/licenses/>.
+ * along with LapRF Protocol.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { NumberType } from "./Binary";
+import { NumberType } from "@bitmachina/binary/lib/NumberType";
 
 const indexes = Symbol("indexes");
 
@@ -88,8 +88,8 @@ export namespace Crc {
   }
 }
 
-export const Msg = Object.freeze({
-  unknownRecordType(signature: number | string): string {
+export namespace Msg {
+  export function unknownRecordType(signature: number | string): string {
     let msg = "Unknown record type: ";
     if (typeof signature === "number") {
       msg += `0x${signature.toString(16)}`;
@@ -97,8 +97,9 @@ export const Msg = Object.freeze({
       msg += signature;
     }
     return msg;
-  },
-  unknownFieldType(signature: number | string) {
+  }
+
+  export function unknownFieldType(signature: number | string) {
     let msg = "Unknown field type: ";
     if (typeof signature === "number") {
       msg += `0x${signature.toString(16)}`;
@@ -106,8 +107,9 @@ export const Msg = Object.freeze({
       msg += signature;
     }
     return msg;
-  },
-  sizeMismatch(size: number, type: NumberType) {
+  }
+
+  export function sizeMismatch(size: number, type: NumberType) {
     `Size Mismatch: recieved ${size}, expected ${type.byteLength}`;
   }
-});
+}

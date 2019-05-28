@@ -1,28 +1,28 @@
 /**
  * Author: John Hooks
- * URL: https://github.com/johnhooks/laprf-serial-protocol
+ * URL: https://github.com/johnhooks/laprf
  * Version: 0.1.0
  *
- * This file is part of LapRFSerialProtocol.
+ * This file is part of LapRF Protocol.s
  *
- * LapRFSerialProtocol is free software: you can redistribute it and/or modify
+ * LapRF Protocol is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * LapRFSerialProtocol is distributed in the hope that it will be useful,
+ * LapRF Protocol is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with LapRFSerialProtocol.  If not, see <http://www.gnu.org/licenses/>.
+ * along with LapRF Protocol.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { u8, u16, Binary } from "./Binary";
+import { Binary } from "@bitmachina/binary";
+import { u8, u16 } from "@bitmachina/binary/lib/NumberType";
 import * as RecordType from "./RecordType";
 import * as Serial from "./Serial";
-import { RecordTypeError } from "./Errors";
 import { Msg } from "./Util";
 
 export const MAX_RECORD_LEN = 1024;
@@ -41,7 +41,7 @@ export interface IRecord {
 /**
  * A class to serialize/deserialize LapRF protocol packets.
  */
-export default class LapRFSerialProtocol extends Binary {
+export default class LapRFProtocol extends Binary {
   constructor() {
     super(MAX_RECORD_LEN * 8);
   }
@@ -58,8 +58,7 @@ export default class LapRFSerialProtocol extends Binary {
       Serial.encode(record.fields, this, recordType.schema);
       return this.finishRecord();
     } else {
-      console.warn(Msg.unknownRecordType(record.type));
-      throw new RecordTypeError(record.type);
+      throw new Error(Msg.unknownRecordType(record.type));
     }
   }
 

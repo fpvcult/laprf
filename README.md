@@ -4,14 +4,27 @@ A library, written in TypeScript, to encode and decode ImmersionRC LapRF binary 
 
 ## Concept
 
-The idea is to convert all the data coming from a LapRF into a form that is
-easily converted to and from JSON, or consumed directly in a JavaScript application.
+Convert all the data coming from a LapRF into a form that is easily converted to
+and from JSON, or consumed directly in a JavaScript application.
 
 ```
 { "type": "settings", "fields": [ [ "minLapTime", 6000 ], ... ] }
 ```
 
 ## API
+
+### Class Method: encode
+
+`encode(record: IRecord): Buffer`
+
+Take an object implementing `IRecord` and return a `Buffer` encoded with the contents.
+
+### Class Method: decode
+
+`decode(packet: Buffer): IRecord[]`
+
+Take a `Buffer` containing a LapRF packet and return an array of objects implementing
+`IRecord` (A LapRF packet can contain more than one record).
 
 ### IRecord Interface
 
@@ -22,27 +35,14 @@ interface IRecord {
 }
 ```
 
-### Class Method: encode
-
-`encode(record: IRecord): Buffer`
-
-Take an object implementing `IRecord` and return a `Buffer` encoded with the contents.
-
-### Class Method: decode
-
-`decode(record: Buffer): IRecord[]`
-
-Take a `Buffer` containing a LapRF record and return an array of objects implementing
-`IRecord` (A LapRF packet can contain more than one record).
-
 ## Example:
 
 ```typescript
 import { Socket } from "net";
-import LapRFSerialProtocol, { IRecord } from "./index";
+import LapRFP, { IRecord } from "./index";
 
 const client = new Socket();
-const laprf = new LapRFSerialProtocol();
+const laprf = new LapRF();
 
 client.connect(5403, "192.168.1.9");
 
@@ -61,7 +61,5 @@ client.on("data", chunk => {
 
 ## Notes
 
-Inspired by:
-
-- [IRCSwiftyLapRF](https://github.com/hydrafpv/irc-swifty-laprf)
-- [LapRFUtilities](https://github.com/ImmersionRC/LapRFUtilities)
+Inspired by [IRCSwiftyLapRF](https://github.com/hydrafpv/irc-swifty-laprf) and
+[LapRFUtilities](https://github.com/ImmersionRC/LapRFUtilities)
