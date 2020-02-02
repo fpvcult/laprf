@@ -19,14 +19,14 @@
   "author": "John Hooks <bitmachina@outlook.com>",
   "license": "GPL-3.0",
   "dependencies": {
-    "@bitmachina/binary": "^0.1.0",
+    "@bitmachina/binary": "^0.2.2",
     "@fpvcult/frequency": "^0.1.0"
   },
   "devDependencies": {
-    "@types/jest": "^24.0.13",
-    "@types/node": "^12.0.0",
-    "jest": "^24.8.0",
-    "ts-jest": "^24.0.2",
-    "typescript": "3.4.5"
+    "@types/jest": "^25.1.1",
+    "@types/node": "^12.12.26",
+    "jest": "^25.1.0",
+    "ts-jest": "^25.1.0",
+    "typescript": "^3.7.5"
   }
 }

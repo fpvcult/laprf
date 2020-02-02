@@ -19,9 +19,7 @@
  * along with @fpvcult/laprf.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { Binary } from "@bitmachina/binary";
-import { u8 } from "@bitmachina/binary/lib/NumberType";
-import { Schema } from "@bitmachina/binary/lib/Schema";
+import { Binary, Schema, u8 } from "@bitmachina/binary";
 import { Msg } from "./Util";
 
 export type RecordFields = Array<[string, number]>;

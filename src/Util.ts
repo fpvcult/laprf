@@ -19,7 +19,7 @@
  * along with @fpvcult/laprf.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { NumberType } from "@bitmachina/binary/lib/NumberType";
+import { NumberType } from "@bitmachina/binary";
 
 const indexes = Symbol("indexes");
 

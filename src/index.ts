@@ -19,8 +19,7 @@
  * along with @fpvcult/laprf.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { Binary } from "@bitmachina/binary";
-import { u8, u16 } from "@bitmachina/binary/lib/NumberType";
+import { Binary, u8, u16 } from "@bitmachina/binary";
 import * as RecordType from "./RecordType";
 import * as Serial from "./Serial";
 import { Msg } from "./Util";
@@ -51,11 +50,11 @@ export default class LapRF extends Binary {
    * @param record An object to serialize into a LapRF record.
    */
   encode(record: IRecord): Buffer {
-    const recordType = RecordType.get(record.type);
+    const schema = RecordType.get(record.type);
 
-    if (recordType !== undefined) {
-      this.startRecord(recordType.signature);
-      Serial.encode(record.fields, this, recordType.schema);
+    if (schema !== undefined) {
+      this.startRecord(schema.signature);
+      Serial.encode(record.fields, this, schema);
       return this.finishRecord();
     } else {
       throw new Error(Msg.unknownRecordType(record.type));
@@ -80,21 +79,17 @@ export default class LapRF extends Binary {
           const length = this.byteOffset;
           this.byteOffset = 5; // Seek to the the record signature
           const signature = this.read(u16);
-          const recordType = RecordType.get(signature);
+          const schema = RecordType.get(signature);
 
-          if (recordType !== undefined) {
+          if (schema !== undefined) {
             const fields: Serial.RecordFields = [];
             const binaryFields = this.slice(this.byteOffset, length - 1);
-            const success = Serial.decode(
-              binaryFields,
-              fields,
-              recordType.schema
-            );
+            const success = Serial.decode(binaryFields, fields, schema);
 
             if (success) {
-              decoded.push({ type: recordType.name, fields });
+              decoded.push({ type: schema.name, fields });
             } else {
-              console.warn(`Unable to decode record type '${recordType.name}'`);
+              console.warn(`Unable to decode record type '${schema.name}'`);
             }
           } else {
             console.warn(Msg.unknownRecordType(signature));

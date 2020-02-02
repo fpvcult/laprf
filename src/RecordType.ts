@@ -19,7 +19,7 @@
  * along with @fpvcult/laprf.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { Schema } from "@bitmachina/binary/lib/Schema";
+import { Schema, u8, u16, u32, f32, u64 } from "@bitmachina/binary";
 import { Index } from "./Util";
 
 export enum Signature {
@@ -34,84 +34,69 @@ export enum Signature {
   error = 0xffff
 }
 
-class RecordType {
-  readonly name: string;
-  constructor(readonly signature: Signature, readonly schema: Schema) {
-    this.name = Signature[signature];
-  }
-}
+export const Rssi = new Schema(Signature.rssi, "rssi", [
+  [0x01, u8, "slotIndex"],
+  [0x20, f32, "minRssi"],
+  [0x21, f32, "maxRssi"],
+  [0x22, f32, "meanRssi"],
+  [0x23, u32, "unknown1"],
+  [0x24, u8, "customRate"],
+  [0x25, u32, "packetRate"],
+  [0x26, u32, "unknown2"]
+]);
 
-const recordTypes = new Index<RecordType>();
+export const RfSetup = new Schema(Signature.rfSetup, "rfSetup", [
+  [0x01, u8, "slotIndex"],
+  [0x20, u16, "enabled"],
+  [0x21, u16, "channel"],
+  [0x22, u16, "band"],
+  [0x23, f32, "threshold"],
+  [0x24, u16, "gain"],
+  [0x25, u16, "frequency"]
+]);
 
-export function get(key: string | number): RecordType | undefined {
+export const StateControl = new Schema(Signature.stateControl, "stateControl", [
+  [0x20, u8, "gateState"]
+]);
+
+export const Settings = new Schema(Signature.settings, "settings", [
+  [0x22, u16, "updatePeriod"], // milliseconds between status update messages
+  [0x25, u8, "saveSettings"], // save settings in EEPROM
+  [0x26, u32, "minLapTime"] // minimum lap time, in milliseconds
+]);
+
+export const Passing = new Schema(Signature.passing, "passing", [
+  [0x01, u8, "slotIndex"],
+  [0x02, u64, "rtcTime"],
+  [0x20, u32, "decoderId"],
+  [0x21, u32, "passingNumber"],
+  [0x22, u16, "peakHeight"],
+  [0x23, u16, "flags"]
+]);
+
+export const Status = new Schema(Signature.status, "status", [
+  [0x01, u8, "slotIndex"],
+  [0x03, u16, "flags"],
+  [0x21, u16, "batteryVoltage"],
+  [0x22, f32, "lastRssi"],
+  [0x23, u8, "gateState"],
+  [0x24, u32, "detectionCount"]
+]);
+
+export const Time = new Schema(Signature.time, "time", [
+  [0x02, u64, "rtcTime"],
+  [0x20, u64, "timeRtcTime"]
+]);
+
+const recordTypes = new Index<Schema>();
+
+export function get(key: string | number): Schema | undefined {
   return recordTypes.get(key);
 }
 
-[
-  new RecordType(
-    Signature.rssi,
-    new Schema(s => {
-      s.u8(0x01, "slotIndex");
-      s.f32(0x20, "minRssi");
-      s.f32(0x21, "maxRssi");
-      s.f32(0x22, "meanRssi");
-      s.u32(0x23, "unknown1");
-      s.u8(0x24, "customRate");
-      s.u32(0x25, "packetRate");
-      s.u32(0x26, "unknown2");
-    })
-  ),
-  new RecordType(
-    Signature.rfSetup,
-    new Schema(s => {
-      s.u8(0x01, "slotIndex");
-      s.u16(0x20, "enabled");
-      s.u16(0x21, "channel");
-      s.u16(0x22, "band");
-      s.f32(0x23, "threshold");
-      s.u16(0x24, "gain");
-      s.u16(0x25, "frequency");
-    })
-  ),
-  new RecordType(
-    Signature.stateControl,
-    new Schema(s => {
-      s.u8(0x20, "gateState");
-    })
-  ),
-  new RecordType(
-    Signature.settings,
-    new Schema(s => {
-      s.u32(0x26, "minLapTime");
-    })
-  ),
-  new RecordType(
-    Signature.passing,
-    new Schema(s => {
-      s.u8(0x01, "slotIndex");
-      s.u64(0x02, "rtcTime");
-      s.u32(0x20, "decoderId");
-      s.u32(0x21, "passingNumber");
-      s.u16(0x22, "peakHeight");
-      s.u16(0x23, "flags");
-    })
-  ),
-  new RecordType(
-    Signature.status,
-    new Schema(s => {
-      s.u8(0x01, "slotIndex");
-      s.u16(0x03, "flags");
-      s.u16(0x21, "batteryVoltage");
-      s.f32(0x22, "lastRssi");
-      s.u8(0x23, "gateState");
-      s.u32(0x24, "detectionCount");
-    })
-  ),
-  new RecordType(
-    Signature.time,
-    new Schema(s => {
-      s.u64(0x02, "rtcTime");
-      s.u64(0x20, "timeRtcTime");
-    })
-  )
-].forEach(record => recordTypes.set(record.signature, record.name, record));
+[Rssi, RfSetup, StateControl, Settings, Passing, Status, Time].forEach(
+  schema => {
+    const { signature, name } = schema;
+    recordTypes.set(signature, name, schema);
+  }
+);
