@@ -19,19 +19,20 @@
     "lint": "tsc --noEmit && eslint '*/**/*.{js,ts,tsx}' --quiet --fix",
     "test": "jest"
   },
+  "keywords": [
+    "fpv",
+    "drone",
+    "race"
+  ],
   "author": "John Hooks <bitmachina@outlook.com>",
   "license": "GPL-3.0",
   "dependencies": {
-    "@bitmachina/binary": "^0.2.3",
-    "@fpvcult/frequency": "^0.1.0"
+    "@bitmachina/binary": "^0.2.3"
   },
   "devDependencies": {
-    "@rollup/plugin-commonjs": "^11.0.2",
-    "@rollup/plugin-node-resolve": "^7.1.1",
     "@rollup/plugin-typescript": "^3.0.0",
     "@types/jest": "^25.1.1",
     "@types/node": "^12.12.26",
-    "@types/serialport": "^8.0.0",
     "@typescript-eslint/eslint-plugin": "^2.18.0",
     "@typescript-eslint/parser": "^2.18.0",
     "eslint": "^6.8.0",
