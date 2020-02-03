@@ -2,31 +2,47 @@
   "name": "@fpvcult/laprf",
   "description": "A Node.js LapRF Protocol Library",
   "repository": "github:fpvcult/laprf",
-  "version": "0.1.0",
-  "main": "lib/index.js",
-  "types": "./lib/index.d.ts",
+  "version": "0.2.0",
+  "main": "dist/laprf.js",
+  "typings": "dist/laprf.d.ts",
   "files": [
-    "lib/**/*"
+    "dist/laprf.js",
+    "dist/**/*.d.ts",
+    "README.md"
   ],
   "engines": {
     "node": ">=12.0.0"
   },
   "scripts": {
-    "prebuild": "rm -rf ./lib",
-    "build": "tsc -p .",
+    "prebuild": "shx rm -rf dist",
+    "build": "rollup -c && shx cp src/types.d.ts dist/laprf.d.ts",
+    "lint": "tsc --noEmit && eslint '*/**/*.{js,ts,tsx}' --quiet --fix",
     "test": "jest"
   },
   "author": "John Hooks <bitmachina@outlook.com>",
   "license": "GPL-3.0",
   "dependencies": {
-    "@bitmachina/binary": "^0.2.2",
+    "@bitmachina/binary": "^0.2.3",
     "@fpvcult/frequency": "^0.1.0"
   },
   "devDependencies": {
+    "@rollup/plugin-commonjs": "^11.0.2",
+    "@rollup/plugin-node-resolve": "^7.1.1",
+    "@rollup/plugin-typescript": "^3.0.0",
     "@types/jest": "^25.1.1",
     "@types/node": "^12.12.26",
+    "@types/serialport": "^8.0.0",
+    "@typescript-eslint/eslint-plugin": "^2.18.0",
+    "@typescript-eslint/parser": "^2.18.0",
+    "eslint": "^6.8.0",
+    "eslint-plugin-import": "^2.20.0",
+    "eslint-plugin-jest": "^23.6.0",
     "jest": "^25.1.0",
+    "rollup": "^1.31.0",
+    "shx": "^0.3.2",
     "ts-jest": "^25.1.0",
+    "tslib": "^1.10.0",
     "typescript": "^3.7.5"
-  }
+  },
+  "browserslist": "node 12.0"
 }

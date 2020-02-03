@@ -15,21 +15,21 @@ and from JSON, or consumed directly in a JavaScript application.
 
 ### Class Method: encode
 
-`encode(record: IRecord): Buffer`
+`encode(record: Record): Buffer`
 
-Take an object implementing `IRecord` and return a `Buffer` encoded with the contents.
+Take an object implementing `Record` and return a `Buffer` encoded with the contents.
 
 ### Class Method: decode
 
-`decode(packet: Buffer): IRecord[]`
+`decode(packet: Buffer): Record[]`
 
 Take a `Buffer` containing a LapRF packet and return an array of objects implementing
-`IRecord` (A LapRF packet can contain more than one record).
+`Record` (A LapRF packet can contain more than one record).
 
-### IRecord Interface
+### Record Interface
 
 ```typescript
-interface IRecord {
+interface Record {
   type: string; // recordType
   fields: Array<[string, number]>; // [[fieldName: string, data: number], ...]
 }
@@ -38,22 +38,22 @@ interface IRecord {
 ## Example:
 
 ```typescript
-import { Socket } from "net";
-import LapRF, { IRecord } from "./index";
+import { Socket } from 'net';
+import { LapRF, Record } from './index';
 
 const client = new Socket();
 const laprf = new LapRF();
 
-client.connect(5403, "192.168.1.9");
+client.connect(5403, '192.168.1.9');
 
 client.write(
   laprf.encode({
-    type: "settings",
-    fields: [["minLapTime", 6000]]
+    type: 'settings',
+    fields: [['minLapTime', 6000]],
   })
 );
 
-client.on("data", chunk => {
+client.on('data', chunk => {
   const records = laprf.decode(chunk);
   // ... do something with the records
 });
