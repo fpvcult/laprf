@@ -26,4 +26,12 @@ export class LapRF {
   decode(packet: Buffer): Record[] {
     return this.serial.decode(packet);
   }
+
+  /**
+   * Requesting `rtcTime' from the LapRF device requires a irregularly formated packet.
+   * @returns A buffer containing an encoded request for the `rtcTime'.
+   */
+  requestRtcTime(): Buffer {
+    return this.serial.requestRfSetup();
+  }
 }

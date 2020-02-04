@@ -2,7 +2,7 @@
   "name": "@fpvcult/laprf",
   "description": "A Node.js LapRF Protocol Library",
   "repository": "github:fpvcult/laprf",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "main": "dist/laprf.js",
   "typings": "dist/laprf.d.ts",
   "files": [
@@ -17,6 +17,8 @@
     "prebuild": "shx rm -rf dist",
     "build": "rollup -c && shx cp src/types.d.ts dist/laprf.d.ts",
     "lint": "tsc --noEmit && eslint '*/**/*.{js,ts,tsx}' --quiet --fix",
+    "lint:nofix": "tsc --noEmit && eslint '*/**/*.{js,ts,tsx}' --quiet",
+    "prepublish": "npm run lint:nofix && npm run test && npm run build",
     "test": "jest"
   },
   "keywords": [
