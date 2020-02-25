@@ -1,4 +1,8 @@
 /* eslint-disable no-bitwise */
+import { ErrorCode } from './const';
+import { DecodeError } from './Util';
+import * as Debug from './Debug';
+
 const crc16Table: Uint16Array = (function() {
   const length = 256;
   const table = new Uint16Array(length);
@@ -43,4 +47,23 @@ export function compute(bytes: Buffer): number {
   });
 
   return reflect(remainder, 16);
+}
+
+/**
+ * Verify a LapRF record by performing a cyclic redundancy check (CRC).
+ * WARNING: The `record` is modified in order to verify the CRC.
+ * @param record A LapRF record to verify.
+ * @returns The record buffer or throws a CRC mismatch error.
+ */
+export function verify(record: Buffer): Buffer {
+  const crcRecord = record.readUInt16LE(3);
+  record.writeUInt16LE(0, 3); // Zero the CRC before computing
+  const crcComputed = compute(record);
+
+  if (crcRecord === crcComputed) {
+    Debug.log('CRC verified');
+    return record;
+  } else {
+    throw new DecodeError(ErrorCode.CrcMismatch);
+  }
 }

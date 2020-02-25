@@ -1,184 +1,259 @@
-import { Binary, Schema, u8, u16 } from '@bitmachina/binary';
-import { Record, RecordField } from './types.d';
-import * as RecordType from './RecordType';
-import * as Msg from './Msg';
+import { Binary, NumberType, u8, u16, u32, f32, u64 } from '@bitmachina/binary';
+
+import {
+  TimerEvent,
+  RfSetupEvent,
+  SettingsEvent,
+  PassingEvent,
+  StatusEvent,
+  TimeEvent,
+} from './types.d';
+import { Schema } from './Schema';
+import { Builder } from './Builder';
+import { RecordType, ErrorCode, SOR, EOR, ESC, ESC_OFFSET } from './const';
 import * as Crc from './Crc';
-import { MAX_RECORD_LEN, SOR, EOR, ESC, ESC_OFFSET } from './const';
+import * as Debug from './Debug';
+import { DecodeError } from './Util';
+
+const rfSetup = new Schema<RfSetupEvent>({
+  type: 'rfSetup',
+  slotIndex: [0x01, u8],
+  enabled: [0x20, u16],
+  channel: [0x21, u16],
+  band: [0x22, u16],
+  threshold: [0x23, f32],
+  gain: [0x24, u16],
+  frequency: [0x25, u16],
+});
+
+const settings = new Schema<SettingsEvent>({
+  type: 'settings',
+  updatePeriod: [0x22, u16],
+  saveSettings: [0x25, u8],
+  minLapTime: [0x26, u32],
+});
+
+const passing = new Schema<PassingEvent>({
+  type: 'passing',
+  slotIndex: [0x01, u8],
+  rtcTime: [0x02, u64],
+  decoderId: [0x20, u32],
+  passingNumber: [0x21, u32],
+  peakHeight: [0x22, u16],
+  flags: [0x23, u16],
+});
+
+const status = new Schema<StatusEvent>({
+  type: 'status',
+  flags: [0x03, u16],
+  batteryVoltage: [0x21, u16],
+  gateState: [0x23, u8],
+  detectionCount: [0x24, u32],
+  slots: {
+    slotIndex: [0x01, u8],
+    lastRssi: [0x22, f32],
+  },
+});
+
+const time = new Schema<TimeEvent>({
+  type: 'time',
+  rtcTime: [0x02, u64],
+  timeRtcTime: [0x20, u64],
+});
 
 /**
- * A class to serialize/deserialize LapRF protocol packets.
+ * Decode a LapRF packet.
+ * @param {Buffer} buffer The LapRF packet to decode.
+ * @returns {TimerEvent[]} The decoded `TimerEvents`.
  */
-export default class Serial extends Binary {
-  constructor() {
-    super(MAX_RECORD_LEN * 8);
-  }
+export function decode(buffer: Buffer): Array<TimerEvent> {
+  const timerEvents: Array<TimerEvent> = [];
 
-  /**
-   * Serialize an object implementing [[IRecord]] into a binary LapRF record.
-   * @param record An object to serialize into a LapRF record.
-   */
-  encode(record: Record): Buffer {
-    const schema = RecordType.get(record.type);
+  const buffers = splitRecords(buffer);
 
-    if (schema !== undefined) {
-      this.startRecord(schema.signature);
-      encode(record.fields, this, schema);
-      return this.finishRecord();
-    }
-    throw new Error(Msg.unknownRecordType(record.type));
-  }
-
-  /**
-   * Deserialize a LapRF packet into an array of objects implementing [[IRecord]].
-   * @param packet A packet received from a LapRF to deserialize.
-   * @returns An array of JavaScript objects conforming to the IRecord interface.
-   */
-  decode(packet: Buffer): Record[] {
-    const decoded: Record[] = [];
-
+  for (let i = 0, len = buffers.length; i < len; i++) {
     try {
-      const records = splitRecords(packet);
+      const record = unescape(buffers[i]);
+      const length = record.readInt16LE(1);
 
-      for (let i = 0, len = records.length; i < len; i++) {
-        this.unescape(records[i]); // Escaped contents are stored in the internal buffer
-
-        if (verifyRecord(this.toBuffer())) {
-          const length = this.byteOffset;
-          this.byteOffset = 5; // Seek to the the record signature
-          const signature = this.read(u16);
-          const schema = RecordType.get(signature);
-
-          if (schema !== undefined) {
-            const fields: Array<RecordField> = [];
-            const binaryFields = this.slice(this.byteOffset, length - 1);
-            const success = decode(binaryFields, fields, schema);
-
-            if (success) {
-              decoded.push({ type: schema.name, fields });
-            } else {
-              console.warn(`Unable to decode record type '${schema.name}'`);
-            }
-          } else {
-            console.warn(Msg.unknownRecordType(signature));
-          }
-        }
+      if (record.length !== length) {
+        const msg = `Invalid record length of ${record.length} expected ${length}`;
+        throw new DecodeError(ErrorCode.InvalidRecord, msg);
       }
+
+      if (record.length < 8) {
+        const msg = `Invalid record length of ${record.length}`;
+        throw new DecodeError(ErrorCode.InvalidRecord, msg);
+      }
+
+      Debug.log(`Record Length Entry: ${length}`);
+
+      const timerEvent = decodeRecord(Crc.verify(record));
+
+      timerEvents.push(timerEvent);
     } catch (error) {
       if (error instanceof RangeError) {
-        console.log('Something horrible went wrong!');
+        throw new DecodeError(ErrorCode.RangeError);
+      } else if (error instanceof DecodeError) {
+        Debug.error(`Error ${error.code}: ${error.message}`);
       } else {
         throw error;
       }
     }
-
-    return decoded;
   }
 
-  // TODO: Remove hard coded field signatures for `rctTime'
-  requestRtcTime(): Buffer {
-    this.startRecord(RecordType.Signature.time);
-    this.write(u8, 0x02); // `rtcTime'
-    this.write(u8, 0x00);
-    return this.finishRecord();
-  }
+  return timerEvents;
+}
 
-  // TODO: Requesting all slots is not working
-  // TODO: Remove hard coded field signatures for `slotIndex'
-  requestRfSetup(slotIndex?: number): Buffer {
-    this.startRecord(RecordType.Signature.rfSetup);
+/**
+ * Initialize the serialization of a LapRF record.
+ * @param {number} signature The [[RecordType]] of the record to initialize.
+ * @returns {Builder} A buffer builder.
+ */
+export function startRecord(signature: number): Builder {
+  return new Builder()
+    .write(u8, SOR)
+    .write(u16, 0) // Length placeholder
+    .write(u16, 0) // CRC placeholder
+    .write(u16, signature);
+}
 
-    if (typeof slotIndex === 'number') {
-      this.write(u8, 0x01); // `slotIndex'
-      this.write(u8, slotIndex);
+/**
+ * Finish the serialization of a LapRF record.
+ * @param {Builder} record
+ * @returns {Buffer} A Buffer containing the completed, escaped record.
+ */
+export function finishRecord(record: Builder): Buffer {
+  record.write(u8, EOR);
+  const buffer = record.toBuffer();
+  const length = buffer.byteLength;
+  buffer.writeUInt16LE(length, 1);
+  buffer.writeUInt16LE(Crc.compute(buffer), 3);
+  return escape(buffer);
+}
+
+/**
+ * Escape a LapRF record.
+ * @param {Buffer} record The record to escape.
+ * @returns {Buffer} The `record` with content escaped.
+ */
+export function escape(record: Buffer): Buffer {
+  const bytes: Array<number> = [];
+
+  let byte: number;
+
+  for (let i = 0, len = record.length; i < len; i++) {
+    byte = record.readUInt8(i);
+    if ((byte === ESC || byte === SOR || byte === EOR) && i !== 0 && i !== len - 1) {
+      bytes.push(ESC);
+      bytes.push(byte + ESC_OFFSET);
     } else {
-      for (let i = 1; i <= 8; i++) {
-        this.write(u8, 0x01); // `slotIndex'
-        this.write(u8, i);
+      bytes.push(byte);
+    }
+  }
+
+  return Buffer.from(bytes);
+}
+
+/**
+ * Unescaped a LapRF packet.
+ * @param {Buffer} record Raw record received from a LapRF.
+ * @returns {Buffer} The `record` with content unescaped.
+ */
+export function unescape(record: Buffer): Buffer {
+  const bytes: Array<number> = [];
+
+  let byte: number;
+  let escaped = false;
+
+  for (let i = 0, len = record.length; i < len; i++) {
+    byte = record.readUInt8(i);
+    if (escaped) {
+      escaped = false;
+      bytes.push(byte - ESC_OFFSET);
+    } else {
+      switch (byte) {
+        case EOR:
+          bytes.push(byte);
+          return Buffer.from(bytes);
+        case ESC:
+          escaped = true;
+          break;
+        default:
+          bytes.push(byte);
       }
     }
-
-    return this.finishRecord();
   }
 
-  /**
-   * Initialize the serialization of a LapRF record.
-   * @param recordType The [[RecordType]] of the record to initialize.
-   */
-  private startRecord(signature: number): void {
-    this.byteOffset = 0; // Reset the internal buffer
-    this.write(u8, SOR);
-    this.write(u16, 0); // Length placeholder
-    this.write(u16, 0); // CRC placeholder
-    this.write(u16, signature);
-  }
+  throw new DecodeError(ErrorCode.InvalidRecord, 'Failed to unescape record');
+}
 
-  /**
-   * Finish the serialization of a LapRF record.
-   * @returns A Buffer containing the completed, escaped record.
-   */
-  private finishRecord(): Buffer {
-    this.write(u8, EOR);
-    const length = this.byteOffset;
-    const record = Buffer.from(this.toBuffer()); // Copy
-    record.writeUInt16LE(length, 1);
-    const crc = Crc.compute(record);
-    record.writeUInt16LE(crc, 3);
-    return this.escape(record);
-  }
+/**
+ * Encode a LapRF record field.
+ * @param {Builder} record The record on to which to insert the field.
+ * @param {number} signature The field signature.
+ * @param {NumberType} type The `NumberType` of `value`
+ * @param {number} value The field data.
+ * @returns {undefined}
+ */
+export function encodeField(
+  record: Builder,
+  signature: number,
+  type: NumberType,
+  value: number
+): void {
+  record.write(u8, signature);
+  record.write(u8, type.byteLength);
+  record.write(type, value);
+}
 
-  /**
-   * Escape a LapRF record.
-   * @param record The record to escape.
-   * @returns A buffer containing the escaped contents of the `record`.
-   */
-  private escape(record: Buffer): Buffer {
-    let byte: number;
-    this.byteOffset = 0; // Reset the buffer
-    for (let i = 0, len = record.length; i < len; i++) {
-      byte = record.readUInt8(i);
-      if ((byte === ESC || byte === SOR || byte === EOR) && i !== 0 && i !== len - 1) {
-        this.write(u8, ESC);
-        this.write(u8, byte + ESC_OFFSET);
-      } else {
-        this.write(u8, byte);
+/**
+ * Decode a LapRF record.
+ * @param {Buffer} buffer The LapRF record to decode.
+ * @returns {TimerEvent} The decoded `TimerEvent`.
+ */
+function decodeRecord(buffer: Buffer): TimerEvent {
+  const recordType = buffer.readUInt16LE(5);
+  const record = new Binary(buffer, 7); // Begin after record type field
+
+  switch (recordType) {
+    case RecordType.error:
+      throw new DecodeError(ErrorCode.DeviceError);
+    case RecordType.descriptor:
+      // Record Type: 0xda08, Unknown Signature: 0x20, Size: 4
+      // Record Type: 0xda08, Unknown Signature: 0x21, Size: 1
+      throw new DecodeError(ErrorCode.UnknownRecordType);
+    case RecordType.passing:
+      return passing.decode(record);
+    case RecordType.rfSetup:
+      return rfSetup.decode(record);
+    case RecordType.settings:
+      return settings.decode(record);
+    case RecordType.status:
+      return status.decode(record);
+    case RecordType.time:
+      return time.decode(record);
+    default: {
+      const msg = `Unknown RecordType 0x${recordType.toString(16)}`;
+      if (Debug.isWarning()) {
+        console.warn(msg);
+        decodeUnknown(record);
       }
+      throw new DecodeError(ErrorCode.UnknownRecordType, msg);
     }
-    return Buffer.from(this.toBuffer());
-  }
-
-  /**
-   * Unescaped a LapRF packet and store the contents in the internal buffer.
-   * @param record Raw record received from a LapRF.
-   */
-  private unescape(record: Buffer): void {
-    let byte: number;
-    let escaped = false;
-    this.byteOffset = 0; // Reset the buffer
-    for (let i = 0, len = record.length; i < len; i++) {
-      byte = record.readUInt8(i);
-      if (escaped) {
-        escaped = false;
-        this.write(u8, byte - ESC_OFFSET);
-      } else {
-        switch (byte) {
-          case EOR:
-            this.write(u8, byte);
-            return;
-          case ESC:
-            escaped = true;
-            break;
-          default:
-            this.write(u8, byte);
-        }
-      }
-    }
-    throw new Error('Unable to unescape the record');
   }
 }
 
+/**
+ * Split a LapRF packet into individual records.
+ * @param {Buffer} packet An unescaped packet.
+ * @returns {Buffer[]} The records contained in the `packet`.
+ */
 function splitRecords(packet: Buffer): Buffer[] {
   const records: Buffer[] = [];
+
   let offset = 0;
+
   while (true) {
     const sor = packet.indexOf(SOR, offset);
     if (sor > -1) {
@@ -192,81 +267,36 @@ function splitRecords(packet: Buffer): Buffer[] {
       break;
     }
   }
+
   return records;
 }
 
-/**
- * Verify a LapRF record for length and perform a cyclic redundancy check (CRC).
- * WARNING: The `record` is modified in order to verify the CRC.
- * @param record A LapRF record to verify.
- * @returns Whether or not the `record` has been verified.
- */
-function verifyRecord(record: Buffer): boolean {
-  const length = record.readInt16LE(1);
-  if (record.length !== length) console.warn('Record length mismatch');
-  if (record.length < 8 || record.length > MAX_RECORD_LEN) return false;
-
-  const crcRecord = record.readUInt16LE(3);
-  record.writeUInt16LE(0, 3); // Must zero the CRC before computing
-  const crcComputed = Crc.compute(record);
-
-  if (crcRecord === crcComputed) {
-    return true;
-  }
-
-  console.warn('CRC mismatch');
-  return false;
-}
-
-/**
- * Encode an array of [[RecordFields]] into a binary LapRF record.
- * @param source Array of record field data to encode.
- * @param target Target to fill with binary data.
- * @param schema The record type schema to use to encode the data.
- */
-function encode<T extends Binary>(source: Array<RecordField>, target: T, schema: Schema): void {
-  for (let i = 0, len = source.length; i < len; i++) {
-    const [name, data] = source[i];
-    const fieldType = schema.get(name);
-    if (fieldType !== undefined) {
-      const { signature, type } = fieldType;
-      target.write(u8, signature);
-      target.write(u8, type.byteLength);
-      target.write(type, data);
-    } else {
-      // console.warn(Msg.unknownFieldType(name));
-      throw new Error(`Unknown field type '${name}'`);
-    }
+function decodeRawUInt(source: Binary): number | undefined {
+  const size = source.read(u8);
+  switch (size) {
+    case 1:
+      return source.read(u8);
+    case 2:
+      return source.read(u16);
+    case 4:
+      return source.read(u32);
+    case 8:
+      return source.read(u64);
+    default:
+      return undefined;
   }
 }
 
-/**
- * Decode a binary LapRF record into an array of [[RecordFields]].
- * @param source Binary LapRF record to decode.
- * @param target Target to fill with record fields.
- * @param schema The record type schema to use to decode the record.
- * @returns Whether or not decoding was successful.
- */
-function decode<T extends Binary>(source: T, target: Array<RecordField>, schema: Schema): boolean {
-  const { length } = source;
-
-  while (source.byteOffset < length) {
+function decodeUnknown(source: Binary): void {
+  loop: while (true) {
     const signature = source.read(u8);
-    const size = source.read(u8);
-    const fieldType = schema.get(signature);
-    if (fieldType !== undefined) {
-      const { name, type } = fieldType;
-      if (size === type.byteLength) {
-        const data = source.read(type);
-        target.push([name, data]);
-      } else {
-        console.warn(Msg.sizeMismatch(size, type));
-        return false;
-      }
+    if (signature === EOR) break loop;
+    const result = decodeRawUInt(source);
+    if (result !== undefined) {
+      console.warn(`  Signature 0x${signature.toString(16)}: ${result}`);
     } else {
-      console.warn(Msg.unknownFieldType(signature));
-      return false;
+      console.error('Size mismatch while decoding unknown record type');
+      break loop;
     }
   }
-  return true;
 }
