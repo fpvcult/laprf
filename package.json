@@ -18,7 +18,7 @@
     "build": "rollup -c && shx cp src/types.d.ts dist/laprf.d.ts",
     "lint": "tsc --noEmit && eslint '*/**/*.{js,ts,tsx}' --quiet --fix",
     "lint:nofix": "tsc --noEmit && eslint '*/**/*.{js,ts,tsx}' --quiet",
-    "prepublish": "npm run lint:nofix && npm run test && npm run build",
+    "prepare": "npm run lint:nofix && npm run test && npm run build",
     "test": "jest"
   },
   "keywords": [

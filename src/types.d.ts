@@ -54,7 +54,7 @@ export interface Channel {
 }
 
 export interface SetSlotInput {
-  slotIndex: number;
+  slotIndex: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
   channelName: string;
   gain: number;
   threshold: number;
@@ -63,5 +63,7 @@ export interface SetSlotInput {
 
 export declare function decode(packet: Buffer): Array<TimerEvent>;
 export declare function getRtcTime(): Buffer;
+export declare function getMinLapTime(): Buffer;
+export declare function setMinLapTime(milliseconds: number): Buffer;
 export declare function getRfSetup(slotIndex?: number): Buffer;
 export declare function setRfSetup(settings: SetSlotInput): Buffer;
