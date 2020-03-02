@@ -9,6 +9,11 @@ export class Builder {
   private byteLength = 0;
   private data: Array<Data> = [];
 
+  /**
+   * @param {NumberType} type The number type of `value`.
+   * @param {number} value - The value to be written to the buffer
+   * @returns {Builder} this - The current offset of the buffer after the write
+   */
   write(type: NumberType, value: number): Builder {
     this.data.push({ type, value });
     this.byteLength += type.byteLength;
