@@ -1,4 +1,4 @@
-import { Binary, NumberType, u8, u16, u32, f32, u64 } from '@bitmachina/binary';
+import { Binary, Builder, NumberType, u8, u16, u32, f32, u64 } from '@bitmachina/binary';
 
 import {
   TimerEvent,
@@ -9,7 +9,6 @@ import {
   TimeEvent,
 } from './types.d';
 import { Schema } from './Schema';
-import { Builder } from './Builder';
 import { RecordType, ErrorCode, SOR, EOR, ESC, ESC_OFFSET } from './const';
 import * as Crc from './Crc';
 import * as Debug from './Debug';

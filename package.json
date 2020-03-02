@@ -2,7 +2,7 @@
   "name": "@fpvcult/laprf",
   "description": "A Node.js LapRF Protocol Library",
   "repository": "github:fpvcult/laprf",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "main": "dist/laprf.js",
   "typings": "dist/laprf.d.ts",
   "files": [
@@ -29,7 +29,7 @@
   "author": "John Hooks <bitmachina@outlook.com>",
   "license": "GPL-3.0",
   "dependencies": {
-    "@bitmachina/binary": "^0.2.3"
+    "@bitmachina/binary": "^0.3.0"
   },
   "devDependencies": {
     "@rollup/plugin-typescript": "^3.0.0",
