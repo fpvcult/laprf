@@ -29,10 +29,13 @@
   "author": "John Hooks <bitmachina@outlook.com>",
   "license": "GPL-3.0",
   "dependencies": {
-    "@bitmachina/binary": "^0.3.0"
+    "@bitmachina/binary": "^0.3.0",
+    "debug": "^4.1.1",
+    "supports-color": "^7.1.0"
   },
   "devDependencies": {
     "@rollup/plugin-typescript": "^3.0.0",
+    "@types/debug": "^4.1.5",
     "@types/jest": "^25.1.3",
     "@types/node": "^12.12.26",
     "@typescript-eslint/eslint-plugin": "^2.21.0",

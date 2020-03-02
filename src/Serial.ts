@@ -1,4 +1,5 @@
 import { Binary, Builder, NumberType, u8, u16, u32, f32, u64 } from '@bitmachina/binary';
+import Debug from 'debug';
 
 import {
   TimerEvent,
@@ -11,8 +12,9 @@ import {
 import { Schema } from './Schema';
 import { RecordType, ErrorCode, SOR, EOR, ESC, ESC_OFFSET } from './const';
 import * as Crc from './Crc';
-import * as Debug from './Debug';
 import { DecodeError } from './Util';
+
+const debug = Debug('laprf:serial');
 
 const rfSetup = new Schema<RfSetupEvent>({
   type: 'rfSetup',
@@ -85,7 +87,7 @@ export function decode(buffer: Buffer): Array<TimerEvent> {
         throw new DecodeError(ErrorCode.InvalidRecord, msg);
       }
 
-      Debug.log(`Record Length Entry: ${length}`);
+      debug(`Record Length Entry: ${length}`);
 
       const timerEvent = decodeRecord(Crc.verify(record));
 
@@ -94,7 +96,7 @@ export function decode(buffer: Buffer): Array<TimerEvent> {
       if (error instanceof RangeError) {
         throw new DecodeError(ErrorCode.RangeError);
       } else if (error instanceof DecodeError) {
-        Debug.error(`Error ${error.code}: ${error.message}`);
+        debug(`Error ${error.code}: ${error.message}`);
       } else {
         throw error;
       }
@@ -234,8 +236,8 @@ function decodeRecord(buffer: Buffer): TimerEvent {
       return time.decode(record);
     default: {
       const msg = `Unknown RecordType 0x${recordType.toString(16)}`;
-      if (Debug.isWarning()) {
-        console.warn(msg);
+      if (debug.enabled) {
+        debug(msg);
         decodeUnknown(record);
       }
       throw new DecodeError(ErrorCode.UnknownRecordType, msg);
@@ -292,9 +294,9 @@ function decodeUnknown(source: Binary): void {
     if (signature === EOR) break loop;
     const result = decodeRawUInt(source);
     if (result !== undefined) {
-      console.warn(`  Signature 0x${signature.toString(16)}: ${result}`);
+      debug(`  Signature 0x${signature.toString(16)}: ${result}`);
     } else {
-      console.error('Size mismatch while decoding unknown record type');
+      debug('Size mismatch while decoding unknown record type');
       break loop;
     }
   }

@@ -6,6 +6,6 @@ export default {
     file: 'dist/laprf.js',
     format: 'cjs',
   },
-  external: ['@bitmachina/binary'],
+  external: ['@bitmachina/binary', 'debug'],
   plugins: [typescript()],
 };

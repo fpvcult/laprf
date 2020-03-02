@@ -1,8 +1,11 @@
 import { Binary, NumberType, u8 } from '@bitmachina/binary';
+import Debug from 'debug';
+
 import { TimerEvent } from './types.d';
 import { EOR, RecordType, ErrorCode } from './const';
-import * as Debug from './Debug';
 import { Index, DecodeError } from './Util';
+
+const debug = Debug('laprf:schema');
 
 interface Field {
   name: string;
@@ -76,16 +79,14 @@ export class Schema<T extends TimerEvent> {
             } else if (slot) {
               slot[name] = data;
             } else {
-              Debug.error(`Unhandled slot field: ${name}`);
+              debug(`Unhandled slot field: ${name}`);
             }
           }
         } else {
           throw new DecodeError(ErrorCode.SizeError);
         }
       } else {
-        Debug.warn(
-          `Unknown field signature: 0x${signature.toString(16)} in record type: ${this.type}`
-        );
+        debug(`Unknown field signature: 0x${signature.toString(16)} in record type: ${this.type}`);
       }
     }
 

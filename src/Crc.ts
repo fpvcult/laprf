@@ -1,7 +1,9 @@
 /* eslint-disable no-bitwise */
 import { ErrorCode } from './const';
 import { DecodeError } from './Util';
-import * as Debug from './Debug';
+import Debug from 'debug';
+
+const debug = Debug('laprf:crc');
 
 const crc16Table: Uint16Array = (function() {
   const length = 256;
@@ -61,7 +63,7 @@ export function verify(record: Buffer): Buffer {
   const crcComputed = compute(record);
 
   if (crcRecord === crcComputed) {
-    Debug.log('CRC verified');
+    debug('CRC verified');
     return record;
   } else {
     throw new DecodeError(ErrorCode.CrcMismatch);
