@@ -13,6 +13,11 @@ import { EncodeError } from './Util';
 export const decode = Serial.decode;
 
 /**
+ * Lookup a fpv channel.
+ */
+export const lookupChanel = Frequency.get;
+
+/**
  * Serialize a LapRF packet to request the `rtcTime`.
  * * Requesting `rtcTime' requires an irregular packet.
  * @returns {Buffer} An encoded packet to request `rtcTime'.

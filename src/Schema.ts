@@ -1,7 +1,7 @@
 import { Binary, NumberType, u8 } from '@bitmachina/binary';
 import Debug from 'debug';
 
-import { TimerEvent } from './types.d';
+import { DeviceRecord } from './types.d';
 import { EOR, RecordType, ErrorCode } from './const';
 import { Index, DecodeError } from './Util';
 
@@ -15,13 +15,23 @@ interface Field {
 
 type FieldInput = readonly [number, NumberType]; // (Signature, NumberType)
 
-type FieldInputs<T> = T extends object ? { [P in keyof T]: FieldInput } : FieldInput;
-
-type SchemaConfig<T extends TimerEvent> = {
-  [P in keyof T]: P extends 'type' ? T[P] : FieldInputs<T[P]>;
+/**
+ * To capture the type of an array use `infer`.
+ * T extends (infer U)[] ? [ can use U here ]
+ */
+type SchemaConfig<T extends DeviceRecord> = {
+  [P in keyof T]: P extends 'type'
+    ? T[P]
+    : P extends 'slots'
+    ? T[P] extends (infer U)[]
+      ? U extends object
+        ? { [P in keyof U]: FieldInput }
+        : never
+      : never
+    : FieldInput;
 };
 
-export class Schema<T extends TimerEvent> {
+export class Schema<T extends DeviceRecord> {
   private type: keyof typeof RecordType;
 
   private slots: Set<string> = new Set();
@@ -40,7 +50,7 @@ export class Schema<T extends TimerEvent> {
       if (name === 'slots') {
         const field = schema[name];
         for (const name in field) {
-          const [signature, type] = field[name] as FieldInput;
+          const [signature, type] = (field[name] as unknown) as FieldInput;
           this.indexes.set(signature, name, { signature, name, type });
           this.slots.add(name);
         }
@@ -120,7 +130,7 @@ export class Schema<T extends TimerEvent> {
   }
 }
 
-function isFieldInput<T extends TimerEvent>(
+function isFieldInput<T extends DeviceRecord>(
   o: SchemaConfig<T>,
   k: Extract<keyof T, string>
 ): boolean {

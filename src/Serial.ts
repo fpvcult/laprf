@@ -2,12 +2,12 @@ import { Binary, Builder, NumberType, u8, u16, u32, f32, u64 } from '@bitmachina
 import Debug from 'debug';
 
 import {
-  TimerEvent,
-  RfSetupEvent,
-  SettingsEvent,
-  PassingEvent,
-  StatusEvent,
-  TimeEvent,
+  DeviceRecord,
+  RfSetupRecord,
+  SettingsRecord,
+  PassingRecord,
+  StatusRecord,
+  TimeRecord,
 } from './types.d';
 import { Schema } from './Schema';
 import { RecordType, ErrorCode, SOR, EOR, ESC, ESC_OFFSET } from './const';
@@ -16,7 +16,7 @@ import { DecodeError } from './Util';
 
 const debug = Debug('laprf:serial');
 
-const rfSetup = new Schema<RfSetupEvent>({
+const rfSetup = new Schema<RfSetupRecord>({
   type: 'rfSetup',
   slotIndex: [0x01, u8],
   enabled: [0x20, u16],
@@ -27,14 +27,14 @@ const rfSetup = new Schema<RfSetupEvent>({
   frequency: [0x25, u16],
 });
 
-const settings = new Schema<SettingsEvent>({
+const settings = new Schema<SettingsRecord>({
   type: 'settings',
   updatePeriod: [0x22, u16],
   saveSettings: [0x25, u8],
   minLapTime: [0x26, u32],
 });
 
-const passing = new Schema<PassingEvent>({
+const passing = new Schema<PassingRecord>({
   type: 'passing',
   slotIndex: [0x01, u8],
   rtcTime: [0x02, u64],
@@ -44,7 +44,7 @@ const passing = new Schema<PassingEvent>({
   flags: [0x23, u16],
 });
 
-const status = new Schema<StatusEvent>({
+const status = new Schema<StatusRecord>({
   type: 'status',
   flags: [0x03, u16],
   batteryVoltage: [0x21, u16],
@@ -56,7 +56,7 @@ const status = new Schema<StatusEvent>({
   },
 });
 
-const time = new Schema<TimeEvent>({
+const time = new Schema<TimeRecord>({
   type: 'time',
   rtcTime: [0x02, u64],
   timeRtcTime: [0x20, u64],
@@ -67,8 +67,8 @@ const time = new Schema<TimeEvent>({
  * @param {Buffer} buffer The LapRF packet to decode.
  * @returns {TimerEvent[]} The decoded `TimerEvents`.
  */
-export function decode(buffer: Buffer): Array<TimerEvent> {
-  const timerEvents: Array<TimerEvent> = [];
+export function decode(buffer: Buffer): Array<DeviceRecord> {
+  const timerEvents: Array<DeviceRecord> = [];
 
   const buffers = splitRecords(buffer);
 
@@ -213,7 +213,7 @@ export function encodeField(
  * @param {Buffer} buffer The LapRF record to decode.
  * @returns {TimerEvent} The decoded `TimerEvent`.
  */
-function decodeRecord(buffer: Buffer): TimerEvent {
+function decodeRecord(buffer: Buffer): DeviceRecord {
   const recordType = buffer.readUInt16LE(5);
   const record = new Binary(buffer, 7); // Begin after record type field
 

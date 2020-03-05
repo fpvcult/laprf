@@ -1,4 +1,9 @@
-export interface RfSetupEvent {
+export interface StatusSlot {
+  slotIndex: number;
+  lastRssi: number;
+}
+
+export interface RfSetupRecord {
   type: 'rfSetup';
   slotIndex: number;
   enabled: number;
@@ -9,14 +14,14 @@ export interface RfSetupEvent {
   frequency: number;
 }
 
-export interface SettingsEvent {
+export interface SettingsRecord {
   type: 'settings';
   updatePeriod: number;
   saveSettings: number;
   minLapTime: number;
 }
 
-export interface PassingEvent {
+export interface PassingRecord {
   type: 'passing';
   slotIndex: number;
   rtcTime: number;
@@ -26,25 +31,27 @@ export interface PassingEvent {
   flags: number;
 }
 
-export interface StatusEvent {
+export interface StatusRecord {
   type: 'status';
   flags: number;
   gateState: number;
   batteryVoltage: number;
   detectionCount: number;
-  slots: {
-    slotIndex: number;
-    lastRssi: number;
-  };
+  slots: StatusSlot[];
 }
 
-export interface TimeEvent {
+export interface TimeRecord {
   type: 'time';
   rtcTime: number;
   timeRtcTime: number;
 }
 
-export type TimerEvent = RfSetupEvent | SettingsEvent | PassingEvent | StatusEvent | TimeEvent;
+export type DeviceRecord =
+  | RfSetupRecord
+  | SettingsRecord
+  | PassingRecord
+  | StatusRecord
+  | TimeRecord;
 
 export interface Channel {
   readonly band: number;
@@ -61,9 +68,13 @@ export interface SetSlotInput {
   enabled: boolean;
 }
 
-export declare function decode(packet: Buffer): Array<TimerEvent>;
+export declare function decode(packet: Buffer): Array<DeviceRecord>;
 export declare function getRtcTime(): Buffer;
 export declare function getMinLapTime(): Buffer;
 export declare function setMinLapTime(milliseconds: number): Buffer;
 export declare function getRfSetup(slotIndex?: number): Buffer;
 export declare function setRfSetup(settings: SetSlotInput): Buffer;
+
+export declare function lookupChannel(name: string): Channel | undefined;
+export declare function lookupChannel(band: number, channel: number): Channel | undefined;
+export declare function lookupChannel(arg1: string | number, arg2?: number): Channel | undefined;
