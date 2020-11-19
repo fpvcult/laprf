@@ -1,11 +1,15 @@
+export type SlotId = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+
 export interface StatusSlot {
-  slotIndex: number;
+  slotId: SlotId;
   lastRssi: number;
 }
 
+export type StatusSlots = Record<SlotId, { lastRssi: number }>;
+
 export interface RfSetupRecord {
   type: 'rfSetup';
-  slotIndex: number;
+  slotId: SlotId;
   enabled: number;
   channel: number;
   band: number;
@@ -23,7 +27,7 @@ export interface SettingsRecord {
 
 export interface PassingRecord {
   type: 'passing';
-  slotIndex: number;
+  slotId: SlotId;
   rtcTime: number;
   decoderId: number;
   passingNumber: number;
@@ -37,7 +41,7 @@ export interface StatusRecord {
   gateState: number;
   batteryVoltage: number;
   detectionCount: number;
-  slots: StatusSlot[];
+  slots: StatusSlots;
 }
 
 export interface TimeRecord {
@@ -61,7 +65,7 @@ export interface Channel {
 }
 
 export interface SetSlotInput {
-  slotIndex: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+  slotId: SlotId;
   channelName: string;
   gain: number;
   threshold: number;

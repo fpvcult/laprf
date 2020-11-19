@@ -18,7 +18,7 @@ const debug = Debug('laprf:serial');
 
 const rfSetup = new Schema<RfSetupRecord>({
   type: 'rfSetup',
-  slotIndex: [0x01, u8],
+  slotId: [0x01, u8],
   enabled: [0x20, u16],
   channel: [0x21, u16],
   band: [0x22, u16],
@@ -36,7 +36,7 @@ const settings = new Schema<SettingsRecord>({
 
 const passing = new Schema<PassingRecord>({
   type: 'passing',
-  slotIndex: [0x01, u8],
+  slotId: [0x01, u8],
   rtcTime: [0x02, u64],
   decoderId: [0x20, u32],
   passingNumber: [0x21, u32],
@@ -51,7 +51,7 @@ const status = new Schema<StatusRecord>({
   gateState: [0x23, u8],
   detectionCount: [0x24, u32],
   slots: {
-    slotIndex: [0x01, u8],
+    slotId: [0x01, u8],
     lastRssi: [0x22, f32],
   },
 });

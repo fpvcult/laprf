@@ -16,18 +16,28 @@ interface Field {
 type FieldInput = readonly [number, NumberType]; // (Signature, NumberType)
 
 /**
+ * * SAVE I was pretty proud of this typing, but it's unnecessary now.
  * To capture the type of an array use `infer`.
  * T extends (infer U)[] ? [ can use U here ]
+ *
+ * type SchemaConfig<T extends DeviceRecord> = {
+ *   [P in keyof T]: P extends 'type'
+ *     ? T[P]
+ *     : P extends 'slots'
+ *     ? T[P] extends (infer U)[]
+ *       ? U extends object
+ *         ? { [P in keyof U]: FieldInput }
+ *         : never
+ *       : never
+ *     : FieldInput;
+ * };
  */
+
 type SchemaConfig<T extends DeviceRecord> = {
   [P in keyof T]: P extends 'type'
     ? T[P]
     : P extends 'slots'
-    ? T[P] extends (infer U)[]
-      ? U extends object
-        ? { [P in keyof U]: FieldInput }
-        : never
-      : never
+    ? Record<string, FieldInput>
     : FieldInput;
 };
 
@@ -62,9 +72,9 @@ export class Schema<T extends DeviceRecord> {
     const { length } = source;
 
     const fields: Record<string, number> = {};
-    const slots: Array<Record<string, number>> = [];
+    const slots: Record<number, { lastRssi: number }> = {};
 
-    let slot: Record<string, number> | undefined;
+    let slotId: number | undefined;
 
     while (source.byteOffset < length) {
       const signature = source.read(u8);
@@ -83,13 +93,19 @@ export class Schema<T extends DeviceRecord> {
           if (this.fields.has(name)) {
             fields[name] = data;
           } else if (this.slots.has(name)) {
-            if (name === 'slotIndex' /* Kludge */) {
-              if (slot) slots.push(slot); // Push the slot data into the array if it exists
-              slot = { slotIndex: data }; // Restart collecting slot data
-            } else if (slot) {
-              slot[name] = data;
-            } else {
-              debug(`Unhandled slot field: ${name}`);
+            switch (name) {
+              case 'slotId':
+                slotId = data;
+                break;
+              case 'lastRssi': {
+                if (slotId) {
+                  slots[slotId] = { lastRssi: data };
+                  slotId = undefined;
+                }
+                break;
+              }
+              default:
+                debug(`Unhandled slot field: ${name}`);
             }
           }
         } else {
@@ -100,9 +116,6 @@ export class Schema<T extends DeviceRecord> {
       }
     }
 
-    // * At this point, there could still be data left in `slot`
-    if (slot) slots.push(slot);
-
     // Verify fields are properly formed
     for (const name in this.fields) {
       if (typeof fields[name] !== 'number') {
@@ -111,18 +124,13 @@ export class Schema<T extends DeviceRecord> {
       }
     }
 
-    if (slots.length > 0) {
-      // Verify slots are properly formed
-      for (let i = 0, len = slots.length; i < len; i++) {
-        const slot = slots[i];
-        for (const name in this.slots) {
-          if (typeof slot[name] !== 'number') {
-            const msg = `Record of type: ${this.type} is missing slot field: ${name}`;
-            throw new Error(msg);
-          }
+    if (this.type === 'status') {
+      for (let i = 1; i <= 8; i++) {
+        if (typeof slots[i] === 'undefined') {
+          const msg = `Record of type: ${this.type} is missing slot field index: ${i}`;
+          throw new Error(msg);
         }
       }
-
       return ({ type: this.type, ...fields, slots } as unknown) as T;
     } else {
       return { type: this.type, ...fields } as T;

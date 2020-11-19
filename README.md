@@ -7,7 +7,7 @@ A library, written in TypeScript, to encode and decode ImmersionRC LapRF binary 
 Convert all the data coming from a LapRF into a form that is easily converted to
 and from JSON, or consumed directly in a JavaScript application.
 
-```
+```json
 { "type": "settings", "fields": [ [ "minLapTime", 6000 ], ... ] }
 ```
 
@@ -53,7 +53,7 @@ client.write(
   })
 );
 
-client.on('data', chunk => {
+client.on('data', (chunk) => {
   const records = laprf.decode(chunk);
   // ... do something with the records
 });

@@ -15,7 +15,7 @@ export const decode = Serial.decode;
 /**
  * Lookup a fpv channel.
  */
-export const lookupChanel = Frequency.get;
+export const lookupChannel = Frequency.get;
 
 /**
  * Serialize a LapRF packet to request the `rtcTime`.
@@ -73,7 +73,7 @@ export function getRfSetup(slotIndex?: number): Buffer {
  * @returns {Buffer} An encoded packet to set a `rfSetup' slot.
  */
 export function setRfSetup({
-  slotIndex,
+  slotId,
   channelName,
   gain = 51,
   threshold = 900,
@@ -82,7 +82,7 @@ export function setRfSetup({
   const channel = Frequency.get(channelName);
   if (channel) {
     const record = Serial.startRecord(RecordType.rfSetup);
-    Serial.encodeField(record, 0x01, u8, slotIndex);
+    Serial.encodeField(record, 0x01, u8, slotId);
     Serial.encodeField(record, 0x20, u16, enabled ? 1 : 0);
     Serial.encodeField(record, 0x21, u16, channel.channel);
     Serial.encodeField(record, 0x22, u16, channel.band);
