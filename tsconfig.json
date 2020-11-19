@@ -15,7 +15,7 @@
     "skipLibCheck": true,
     "target": "es5",
     "moduleResolution": "node",
-    "sourceMap": true,
+    "sourceMap": false,
     "types": ["node"]
   },
   "include": ["src/**/*"],
