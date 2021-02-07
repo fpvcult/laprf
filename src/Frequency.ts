@@ -1,5 +1,4 @@
-import { Channel } from './types.d';
-import { IndexOf } from './Util';
+const bandOrder = 'FREBA';
 
 const bands: { [key: string]: number[] } = {
   A: [5865, 5845, 5825, 5805, 5785, 5765, 5745, 5725],
@@ -9,11 +8,31 @@ const bands: { [key: string]: number[] } = {
   R: [5658, 5695, 5732, 5769, 5806, 5843, 5880, 5917],
 };
 
+interface IndexOf<T> {
+  [key: string]: T;
+  [index: number]: T;
+}
+
+export class Channel {
+  constructor(
+    readonly band: number,
+    readonly channel: number,
+    readonly frequency: number,
+    readonly name: string
+  ) {}
+}
+
+const config = 'laprf';
+
+const ordered: Channel[] = [];
 const byNameOrIndex: IndexOf<Channel> = {};
 const byFrequency: IndexOf<Array<Channel>> = {};
-const names: string[] = [];
 
-const order = 'FREBA'.split('');
+if (config !== 'laprf' && config !== 'rx5808') {
+  throw new Error('Invalid configuration input');
+}
+
+const order = bandOrder.split('');
 
 for (let i = 0; i < order.length; i++) {
   const bandName = order[i];
@@ -25,28 +44,34 @@ for (let i = 0; i < order.length; i++) {
     const index = i * 8 + j;
     const frequency = frequencies[j];
     const name = bandName + channel;
-    const current = { band, channel, frequency, name };
+    const current = new Channel(band, channel, frequency, name);
+    ordered.push(current);
     byNameOrIndex[name] = byNameOrIndex[index] = current;
     byFrequency[frequency] = byFrequency[frequency] || [];
     byFrequency[frequency].push(current);
-    names.push(name);
   }
 }
 
-export function get(name: string): Channel | undefined;
-export function get(band: number, channel: number): Channel | undefined;
-export function get(arg1: string | number, arg2?: number): Channel | undefined {
-  if (typeof arg1 === 'string') {
-    return byNameOrIndex[arg1.toUpperCase()];
-  } else if (typeof arg1 === 'number' && typeof arg2 === 'number') {
-    const index = (arg1 - 1) * 8 + (arg2 - 1);
-    return byNameOrIndex[index];
+export default class Frequency {
+  static get(name: string): Channel | undefined;
+  static get(band: number, channel: number): Channel | undefined;
+  static get(arg1: string | number, arg2?: number): Channel | undefined {
+    if (typeof arg1 === 'string') {
+      return byNameOrIndex[arg1.toUpperCase()];
+    } else if (typeof arg1 === 'number' && typeof arg2 === 'number') {
+      const index = (arg1 - 1) * 8 + (arg2 - 1);
+      return byNameOrIndex[index];
+    }
+    return undefined;
   }
-  return undefined;
-}
 
-export function getByFrequency(frequency: number): Channel | Channel[] | undefined {
-  const channels = byFrequency[frequency];
-  if (channels !== undefined && channels.length === 1) return channels[0];
-  return channels;
+  static getByFrequency(frequency: number): Channel | Channel[] | undefined {
+    const channels = byFrequency[frequency];
+    if (channels !== undefined && channels.length === 1) return channels[0];
+    return channels;
+  }
+
+  static getAll(): Channel[] {
+    return [...ordered];
+  }
 }

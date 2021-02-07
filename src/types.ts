@@ -1,5 +1,7 @@
 export type SlotId = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
+export type Maybe<T> = T | undefined;
+
 export interface StatusSlot {
   slotId: SlotId;
   lastRssi: number;
@@ -16,6 +18,14 @@ export interface RfSetupRecord {
   threshold: number;
   gain: number;
   frequency: number;
+}
+
+export interface RssiRecord {
+  type: 'rssi';
+  slotId: SlotId;
+  minRssi: number;
+  maxRssi: number;
+  meanRssi: number;
 }
 
 export interface SettingsRecord {
@@ -52,6 +62,7 @@ export interface TimeRecord {
 
 export type DeviceRecord =
   | RfSetupRecord
+  | RssiRecord
   | SettingsRecord
   | PassingRecord
   | StatusRecord
@@ -71,14 +82,3 @@ export interface SetSlotInput {
   threshold: number;
   enabled: boolean;
 }
-
-export declare function decode(packet: Buffer): Array<DeviceRecord>;
-export declare function getRtcTime(): Buffer;
-export declare function getMinLapTime(): Buffer;
-export declare function setMinLapTime(milliseconds: number): Buffer;
-export declare function getRfSetup(slotIndex?: number): Buffer;
-export declare function setRfSetup(settings: SetSlotInput): Buffer;
-
-export declare function lookupChannel(name: string): Channel | undefined;
-export declare function lookupChannel(band: number, channel: number): Channel | undefined;
-export declare function lookupChannel(arg1: string | number, arg2?: number): Channel | undefined;

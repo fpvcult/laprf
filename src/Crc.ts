@@ -1,11 +1,7 @@
 /* eslint-disable no-bitwise */
 import { ErrorCode } from './const';
-import { DecodeError } from './Util';
-import Debug from 'debug';
 
-const debug = Debug('laprf:crc');
-
-const crc16Table: Uint16Array = (function() {
+const crc16Table: Uint16Array = (function () {
   const length = 256;
   const table = new Uint16Array(length);
   let remainder = 0;
@@ -36,36 +32,32 @@ function reflect(input: number, nbits: number): number {
   return output;
 }
 
-export function compute(bytes: Buffer): number {
+export function compute(buffer: DataView): number {
   let remainder = 0;
 
-  bytes.forEach(byte => {
-    let a = reflect(byte, 8);
+  for (let offset = 0, len = buffer.byteLength; offset < len; offset++) {
+    let a = reflect(buffer.getUint8(offset), 8);
     a &= 0xff;
     const b = (remainder >> 8) & 0xff;
     const c = (remainder << 8) & 0xffff;
     const data = a ^ b;
     remainder = crc16Table[data] ^ c;
-  });
+  }
 
   return reflect(remainder, 16);
 }
 
 /**
  * Verify a LapRF record by performing a cyclic redundancy check (CRC).
- * WARNING: The `record` is modified in order to verify the CRC.
- * @param record A LapRF record to verify.
- * @returns The record buffer or throws a CRC mismatch error.
+ * WARNING: The `buffer` is modified in order to verify the CRC.
+ * @param {DataView} buffer A LapRF record to verify.
+ * @returns {void} Throw an error if there is a CRC mismatch.
  */
-export function verify(record: Buffer): Buffer {
-  const crcRecord = record.readUInt16LE(3);
-  record.writeUInt16LE(0, 3); // Zero the CRC before computing
-  const crcComputed = compute(record);
-
-  if (crcRecord === crcComputed) {
-    debug('CRC verified');
-    return record;
-  } else {
-    throw new DecodeError(ErrorCode.CrcMismatch);
+export function verify(buffer: DataView): void {
+  const crcRecord = buffer.getUint16(3, true);
+  buffer.setUint16(3, 0, true); // Zero the CRC before computing
+  const crcComputed = compute(buffer);
+  if (!(crcRecord === crcComputed)) {
+    throw new Error(`[LapRF Error] ${ErrorCode.CrcMismatch}`);
   }
 }

@@ -1,11 +1,11 @@
 import typescript from '@rollup/plugin-typescript';
 
 export default {
-  input: 'src/laprf.ts',
+  input: 'src/index.ts',
   output: {
-    file: 'dist/laprf.js',
+    file: 'dist/index.js',
     format: 'cjs',
   },
-  external: ['@bitmachina/binary', 'debug'],
+  external: [],
   plugins: [typescript()],
 };
