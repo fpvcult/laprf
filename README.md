@@ -9,61 +9,35 @@ and from JSON, or consumed directly in a JavaScript application.
 
 ## API
 
-### Protocol Static Method: getRctTime
-
 ```ts
-Protocol.getRctTime(): Uint8Array
+class Protocol {
+  // Serialize a LapRF packet to request the rtc time.
+  static getRctTime(): Uint8Array;
+
+  // Serialize a LapRF packet to request the minimum lap time.
+  static getMinLapTime(): Uint8Array;
+
+  // Serialize a LapRF packet to set the minimum lap time.
+  static setMinLapTime(milliseconds: number): Uint8Array;
+
+  // Serialize a LapRF packet to request the rfSetup of either an individual slot,
+  // or all slots if `slotIndex` isn't provided.
+  static getRfSetup(slotIndex?: number): Uint8Array;
+
+  // Serialize a LapRF packet to configure a rfSetup slot.
+  static setRfSetup(input: {
+    slotId: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+    channelName: string;
+    gain: number;
+    threshold: number;
+    enabled: boolean;
+  }): Uint8Array;
+
+  // Takes an `ArrayBuffer` containing a LapRF packet and return an array of
+  // `DeviceRecord`s (A LapRF packet can contain more than one record).
+  static decode(packet: ArrayBuffer): DeviceRecord[];
+}
 ```
-
-Serialize a LapRF packet to request the rtc time.
-
-### Protocol Static Method: getMinLapTime
-
-```ts
-Protocol.getMinLapTime(): Uint8Array
-```
-
-Serialize a LapRF packet to request the minimum lap time.
-
-### Protocol Static Method: setMinLapTime
-
-```ts
-Protocol.setMinLapTime(milliseconds: number): Uint8Array
-```
-
-Serialize a LapRF packet to set the minimum lap time.
-
-### Protocol Static Method: getRfSetup
-
-```ts
-Protocol.getRfSetup(slotIndex?: number): Uint8Array
-```
-
-Serialize a LapRF packet to request the rfSetup of either an individual slot, or all
-slots if `slotIndex` isn't provided.
-
-### Protocol Static Method: setRfSetup
-
-```ts
-Protocol.setRfSetup(input: {
-  slotId: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
-  channelName: string;
-  gain: number;
-  threshold: number;
-  enabled: boolean;
-}): Uint8Array
-```
-
-Serialize a LapRF packet to configure a rfSetup slot.
-
-### Protocol Static Method: decode
-
-```ts
-Protocol.decode(packet: ArrayBuffer): DeviceRecord[]
-```
-
-Takes an `ArrayBuffer` containing a LapRF packet and return an array of `DeviceRecord`s
-(A LapRF packet can contain more than one record).
 
 #### DeviceRecord Types
 
@@ -144,7 +118,8 @@ client.connect(5403, '192.168.1.9');
 client.write(Protocol.setMinLapTime(10_000));
 
 client.on('data', (buffer: Buffer) => {
-  const records = Protocol.decode(buffer.buffer); // Argument is an ArrayBuffer
+  const records = Protocol.decode(buffer.buffer); // Argument to decode needs to be an ArrayBuffer
+
   // ... do something with the records
 });
 ```
