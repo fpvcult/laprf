@@ -101,20 +101,3 @@ export interface SetSlotInput {
   threshold: number;
   enabled: boolean;
 }
-
-// export declare function decode(packet: Buffer): Array<DeviceRecord>;
-// export declare function getRtcTime(): Buffer;
-// export declare function getMinLapTime(): Buffer;
-// export declare function setMinLapTime(milliseconds: number): Buffer;
-// export declare function getRfSetup(slotIndex?: number): Buffer;
-// export declare function setRfSetup(settings: SetSlotInput): Buffer;
-
-// export declare function lookupChannel(name: string): Channel | undefined;
-// export declare function lookupChannel(
-//   band: number,
-//   channel: number
-// ): Channel | undefined;
-// export declare function lookupChannel(
-//   arg1: string | number,
-//   arg2?: number
-// ): Channel | undefined;

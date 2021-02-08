@@ -1,4 +1,5 @@
-import type { NumberType } from "./types";
+import type { NumberType } from './types';
+import { isArrayBuffer, isDataView } from './helpers';
 
 export default class Cursor {
   private _view: DataView;
@@ -6,11 +7,10 @@ export default class Cursor {
   private _littleEndian = true;
 
   constructor(arg: ArrayBuffer | DataView | number) {
-    const type = typeof arg === "object" && arg.toString();
-    if (type === "[object ArrayBuffer]") {
-      this._view = new DataView(arg as ArrayBuffer);
-    } else if (type === "[object DataView]") {
-      this._view = arg as DataView;
+    if (isArrayBuffer(arg)) {
+      this._view = new DataView(arg);
+    } else if (isDataView(arg)) {
+      this._view = arg;
     } else {
       this._view = new DataView(new ArrayBuffer(arg as number));
     }
@@ -38,7 +38,7 @@ export default class Cursor {
   }
 
   /**
-   * @returns {number} The number of bytes left until the end of the internal DataView.
+   * @type {number} The number of bytes left until the end of the internal DataView.
    */
   get bytesLeft(): number {
     return this._view.byteLength - this._position;
@@ -53,23 +53,23 @@ export default class Cursor {
 
   set position(position: number) {
     if (!Number.isInteger(position)) {
-      panic("Cursor#setPosition argument must be an integer");
+      panic('Cursor#setPosition argument must be an integer');
     }
     if (position > this._view.byteLength || position < 0) {
-      panic("Cursor position is outside the bounds of the interior DataView");
+      panic('Cursor position is outside the bounds of the interior DataView');
     }
     this._position = position;
   }
 
   /**
-   * @returns {number} The internal buffer's byteLength.
+   * @type {number} The internal buffer's byteLength.
    */
   get byteLength(): number {
     return this._view.byteLength;
   }
 
   /**
-   * @returns {DataView} The internal DataView.
+   * @type {DataView} A reference to the internal DataView.
    */
   get view(): DataView {
     return this._view;
@@ -102,8 +102,9 @@ export default class Cursor {
     // Use ArrayBuffer#slice to create a copy of the buffer.
     // Need to use the view's byteOffset, because it doesn't necessary begin at
     // the beginning of the ArrayBuffer.
-    const buffer = this._view.buffer.slice(this._view.byteOffset + begin, end);
-    const cursor = new Cursor(new DataView(buffer));
+    const cursor = new Cursor(
+      this._view.buffer.slice(this._view.byteOffset + begin, this._view.byteOffset + end)
+    );
     cursor.LE = this.LE;
     return cursor;
   }
@@ -271,6 +272,6 @@ export default class Cursor {
   }
 }
 
-function panic(msg = "An error occurred"): never {
+function panic(msg = 'An error occurred'): never {
   throw new Error(`[Cursor Error] ${msg}`);
 }

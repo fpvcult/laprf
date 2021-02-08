@@ -23,18 +23,23 @@ import {
   SettingsField,
   TimeField,
 } from './const';
+import { isUint8Array } from './helpers';
 
 export class Decoder {
-  private view: DataView;
   private cursor: Cursor;
 
   /**
    * Initialize a decoder of of a LapRF record.
-   * @param {number} signature The [[RecordType]] of the record to initialize.
+   * @param {ArrayBuffer|Uint8Array} buffer The byte array of the record to decode.
+   * @param {boolean} [debug] Log debug information.
    */
-  constructor(private buffer: ArrayBuffer, private debug = false) {
-    this.view = new DataView(buffer);
-    this.cursor = new Cursor(this.view);
+  constructor(buffer: ArrayBuffer | Uint8Array, private debug = false) {
+    if (isUint8Array(buffer)) {
+      const view = new DataView(buffer.buffer, buffer.byteOffset, buffer.byteLength);
+      this.cursor = new Cursor(view);
+    } else {
+      this.cursor = new Cursor(new DataView(buffer));
+    }
     this.cursor.LE = true;
   }
 
@@ -46,12 +51,12 @@ export class Decoder {
 
     const length = this.cursor.readUint16();
 
-    if (this.buffer.byteLength !== length) {
-      const msg = `Invalid record length of ${this.buffer.byteLength} expected ${length}`;
+    if (this.cursor.byteLength !== length) {
+      const msg = `Invalid record length of ${this.cursor.byteLength} expected ${length}`;
       panic(`${ErrorCode.InvalidRecord}, ${msg}`);
     }
 
-    Crc.verify(this.view); // * Kind of hackish
+    Crc.verify(this.cursor.toDataView()); // * Kind of hackish
     this.cursor.skip(2); // Skip CRC uint16
 
     const type = this.cursor.readUint16();
@@ -213,7 +218,7 @@ export class Decoder {
   private decodeStatusRecord(): StatusRecord {
     const record: Partial<StatusRecord> = { type: 'status' };
     const slots = {} as Record<SlotId, { lastRssi: number }>;
-    const length = this.cursor.view.byteLength;
+    const length = this.cursor.byteLength;
 
     let slotId: Maybe<SlotId> = undefined;
 

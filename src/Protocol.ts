@@ -11,10 +11,12 @@ export class Protocol {
 
   /**
    * Serialize a LapRF packet to request the `rtcTime`.
-   * * Requesting `rtcTime' requires an irregular packet.
+   *
+   * Requesting `rtcTime' requires an irregular packet.
+   * @static
    * @returns {Uint8Array} An encoded packet to request `rtcTime'.
    */
-  static getRctTime(): ArrayBuffer {
+  static getRtcTime(): Uint8Array {
     return new Encoder(RecordType.time)
       .write(u8, TimeField.rtcTime) // `rtcTime`
       .write(u8, 0x00)
@@ -25,7 +27,7 @@ export class Protocol {
    * Serialize a LapRF packet to get the `minLapTime`.
    * @returns {Uint8Array} An encoded packet to request `minLapTime'.
    */
-  static getMinLapTime(): ArrayBuffer {
+  static getMinLapTime(): Uint8Array {
     return new Encoder(RecordType.settings)
       .encodeField(SettingsField.minLapTime, u32, 0x00)
       .finishRecord();
@@ -36,7 +38,7 @@ export class Protocol {
    * @param {number} milliseconds The number of milliseconds to set as the minimum lap time.
    * @returns {Uint8Array} An encoded packet to set `minLapTime'.
    */
-  static setMinLapTime(milliseconds: number): ArrayBuffer {
+  static setMinLapTime(milliseconds: number): Uint8Array {
     return new Encoder(RecordType.settings)
       .encodeField(SettingsField.minLapTime, u32, milliseconds)
       .finishRecord();
@@ -47,7 +49,7 @@ export class Protocol {
    * @param {number} [slotIndex] Optionally request only a single slot.
    * @returns {Uint8Array} An encoded packet to request `rfSetup'.
    */
-  static getRfSetup(slotIndex?: number): ArrayBuffer {
+  static getRfSetup(slotIndex?: number): Uint8Array {
     const record = new Encoder(RecordType.rfSetup);
     if (typeof slotIndex === 'number') {
       record.encodeField(RfSetupField.slotIndex, u8, slotIndex);
@@ -70,7 +72,7 @@ export class Protocol {
     gain = 51,
     threshold = 900,
     enabled = true,
-  }: SetSlotInput): ArrayBuffer {
+  }: SetSlotInput): Uint8Array {
     const channel = Frequency.get(channelName);
 
     if (!channel) {
@@ -88,13 +90,24 @@ export class Protocol {
       .finishRecord();
   }
 
+  /**
+   * Deserialize a LapRF Packet.
+   * @param {ArrayBuffer} buffer The raw LapRF packet to deserialize.
+   * @returns {DeviceRecord[]} The deserialized records.
+   */
   static decode(buffer: ArrayBuffer): DeviceRecord[] {
     const records: DeviceRecord[] = [];
     const buffers = splitRecords(buffer);
 
     for (const buffer of buffers) {
-      const record = new Decoder(buffer, Protocol.DEBUG).decode();
-      if (record) records.push(record);
+      try {
+        const record = new Decoder(buffer, Protocol.DEBUG).decode();
+        if (record) records.push(record);
+      } catch (error) {
+        if (Protocol.DEBUG) {
+          console.error(error);
+        }
+      }
     }
 
     return records;

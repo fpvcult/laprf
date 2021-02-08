@@ -1,4 +1,4 @@
-import { ErrorCode, SOR, EOR, ESC, ESC_OFFSET, MAX_RECORD_LEN } from "./const";
+import { ErrorCode, SOR, EOR, ESC, ESC_OFFSET, MAX_RECORD_LEN } from './const';
 
 /**
  * Escape a LapRF record.
@@ -12,11 +12,7 @@ export function escape(input: Uint8Array): ArrayBuffer {
 
   for (let offset = 0, len = input.byteLength; offset < len; offset++) {
     byte = input[offset];
-    if (
-      (byte === ESC || byte === SOR || byte === EOR) &&
-      offset !== 0 &&
-      offset !== len - 1
-    ) {
+    if ((byte === ESC || byte === SOR || byte === EOR) && offset !== 0 && offset !== len - 1) {
       output[position++] = ESC;
       output[position++] = byte + ESC_OFFSET;
     } else {
@@ -58,9 +54,7 @@ export function unescape(input: Uint8Array): ArrayBuffer {
     }
   }
 
-  throw new Error(
-    `[LapRF Error] ${ErrorCode.InvalidRecord} Failed to unescape record`
-  );
+  throw new Error(`[LapRF Error] ${ErrorCode.InvalidRecord} Failed to unescape record`);
 }
 
 /**
@@ -88,4 +82,20 @@ export function splitRecords(buffer: ArrayBuffer): ArrayBuffer[] {
   }
 
   return output;
+}
+
+/* eslint-disable @typescript-eslint/ban-types */
+
+const toString = (value: unknown) => Object.prototype.toString.call(value);
+
+export function isArrayBuffer(value: unknown): value is ArrayBuffer {
+  return typeof value === 'object' && toString(value) === '[object ArrayBuffer]';
+}
+
+export function isUint8Array(value: unknown): value is Uint8Array {
+  return typeof value === 'object' && toString(value) === '[object Uint8Array]';
+}
+
+export function isDataView(value: unknown): value is DataView {
+  return typeof value === 'object' && toString(value) === '[object DataView]';
 }

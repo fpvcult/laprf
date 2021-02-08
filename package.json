@@ -16,7 +16,8 @@
     "prebuild": "shx rm -rf dist",
     "build": "npm run build:esm && npm run build:cjs",
     "build:esm": "tsc --project tsconfig.json --outDir lib/esm",
-    "build:cjs": "tsc --project tsconfig-cjs.json --outDir lib/cjs",    "lint": "tsc --noEmit && eslint '*/**/*.{js,ts,tsx}' --quiet --fix",
+    "build:cjs": "tsc --project tsconfig-cjs.json --outDir lib/cjs",
+    "lint": "tsc --noEmit && eslint '*/**/*.{js,ts,tsx}' --quiet --fix",
     "lint:nofix": "tsc --noEmit && eslint '*/**/*.{js,ts,tsx}' --quiet",
     "prepare": "npm run lint:nofix && npm run test && npm run build",
     "test": "jest"

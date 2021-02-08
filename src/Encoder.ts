@@ -17,22 +17,22 @@ export class Encoder {
 
     // Start LapRF record.
     this.cursor.write(u8, SOR);
-    this.cursor.write(u16, 0);
-    this.cursor.write(u16, 0);
+    this.cursor.write(u16, 0); // byte length
+    this.cursor.write(u16, 0); // crc
     this.cursor.write(u16, signature);
   }
 
   /**
    * Finish the serialization of a LapRF record.
    * @param {Bytes} record
-   * @returns {ArrayBuffer} A byte array containing the completed, escaped record.
+   * @returns {Uint8Array} A byte array containing the completed, escaped record.
    */
-  finishRecord(): ArrayBuffer {
+  finishRecord(): Uint8Array {
     this.cursor.write(u8, EOR);
     const buffer = this.cursor.toDataView();
     buffer.setUint16(1, buffer.byteLength, true);
     buffer.setUint16(3, Crc.compute(buffer), true);
-    return escape(this.cursor.toUint8Array());
+    return new Uint8Array(escape(this.cursor.toUint8Array()));
   }
 
   /**
