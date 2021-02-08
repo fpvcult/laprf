@@ -1,4 +1,2 @@
-import Frequency from './Frequency';
-import Protocol from './Protocol';
-
-export { Frequency, Protocol };
+export { Frequency } from './Frequency';
+export { Protocol } from './Protocol';

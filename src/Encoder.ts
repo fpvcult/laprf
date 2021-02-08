@@ -1,17 +1,19 @@
-import { SOR, EOR, MAX_RECORD_LEN } from "./const";
-import Cursor from "./Cursor";
-import * as Crc from "./Crc";
-import { NumberType, u8, u16 } from "./NumberType";
-import { escape } from "./helpers";
+import type { NumberType } from './types';
+import { SOR, EOR, MAX_RECORD_LEN } from './const';
+import Cursor from './Cursor';
+import * as Crc from './Crc';
+import { u8, u16 } from './Numbers';
+import { escape } from './helpers';
 
-export default class Encoder {
+export class Encoder {
   private cursor: Cursor;
   /**
    * Initialize the serialization of a LapRF record.
    * @param {number} signature The [[RecordType]] of the record to initialize.
    */
   constructor(signature: number) {
-    this.cursor = new Cursor(new DataView(new ArrayBuffer(MAX_RECORD_LEN)), true);
+    this.cursor = new Cursor(MAX_RECORD_LEN);
+    this.cursor.LE = true;
 
     // Start LapRF record.
     this.cursor.write(u8, SOR);
@@ -41,8 +43,8 @@ export default class Encoder {
    * @returns {undefined}
    */
   encodeField(signature: number, type: NumberType, value: number): Encoder {
-    this.cursor.write(u8, signature);
-    this.cursor.write(u8, type.byteLength);
+    this.cursor.writeUint8(signature);
+    this.cursor.writeUint8(type.byteLength);
     this.cursor.write(type, value);
     return this;
   }

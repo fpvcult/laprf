@@ -1,13 +1,23 @@
 /// <reference types="jest" />
 
 import Cursor from "./Cursor";
-import { u8, i8, u16, i16, u32, i32, u64, /* i64, */ f32, f64 } from "./NumberType";
+import { u8, u16, u32, u64, f32, f64 } from "./Numbers";
 
 let cursor: Cursor;
 
 describe("Cursor Constructor", () => {
+  test("creates a wrapped buffer with a ArrayBuffer argument", () => {
+    cursor = new Cursor(new ArrayBuffer(64));
+    expect(cursor.byteLength).toBe(64);
+  });
+
   test("creates a wrapped buffer with a DataView argument", () => {
     cursor = new Cursor(new DataView(new ArrayBuffer(64)));
+    expect(cursor.byteLength).toBe(64);
+  });
+
+  test("creates a wrapped buffer with a number argument", () => {
+    cursor = new Cursor(64);
     expect(cursor.byteLength).toBe(64);
   });
 });
@@ -15,7 +25,8 @@ describe("Cursor Constructor", () => {
 describe("Cursor Write Functions", () => {
   describe("Big Endian", () => {
     beforeEach(() => {
-      cursor = new Cursor(new DataView(new ArrayBuffer(64)));
+      cursor = new Cursor(64);
+      cursor.BE = true;
     });
 
     describe("Cursor#write u8 NumberType", () => {
@@ -37,29 +48,6 @@ describe("Cursor Write Functions", () => {
         });
         test("contains the correct value", () => {
           expect(cursor.view.getUint8(0)).toBe(value);
-        });
-      }
-    });
-
-    describe("Cursor#write i8 NumberType", () => {
-      const value = -128;
-
-      describe("Cursor#writeUint16", () => {
-        beforeEach(() => cursor.writeInt8(value));
-        testWriteInt8();
-      });
-
-      describe("Cursor#write", () => {
-        beforeEach(() => cursor.write(i8, value));
-        testWriteInt8();
-      });
-
-      function testWriteInt8() {
-        test("increments the byte offset", () => {
-          expect(cursor.position).toBe(1);
-        });
-        test("contains the correct value", () => {
-          expect(cursor.view.getInt8(0)).toBe(value);
         });
       }
     });
@@ -87,29 +75,6 @@ describe("Cursor Write Functions", () => {
       }
     });
 
-    describe("i16 NumberType", () => {
-      const value = -32_768;
-
-      describe("Cursor#writeInt16", () => {
-        beforeEach(() => cursor.writeInt16(value));
-        testWriteInt16();
-      });
-
-      describe("Cursor#write", () => {
-        beforeEach(() => cursor.write(i16, value));
-        testWriteInt16();
-      });
-
-      function testWriteInt16() {
-        test("increments the byte offset", () => {
-          expect(cursor.position).toBe(2);
-        });
-        test("contains the correct value", () => {
-          expect(cursor.view.getInt16(0)).toBe(value);
-        });
-      }
-    });
-
     describe("Cursor#write u32 NumberType", () => {
       const value = 4_294_967_295;
 
@@ -129,29 +94,6 @@ describe("Cursor Write Functions", () => {
         });
         test("contains the correct value", () => {
           expect(cursor.view.getUint32(0)).toBe(value);
-        });
-      }
-    });
-
-    describe("Cursor#write i32 NumberType", () => {
-      const value = -2_147_483_648;
-
-      describe("Cursor#writeUint32", () => {
-        beforeEach(() => cursor.writeInt32(value));
-        testWriteInt32();
-      });
-
-      describe("Cursor#write", () => {
-        beforeEach(() => cursor.write(i32, value));
-        testWriteInt32();
-      });
-
-      function testWriteInt32() {
-        test("increments the byte offset", () => {
-          expect(cursor.position).toBe(4);
-        });
-        test("contains the correct value", () => {
-          expect(cursor.view.getInt32(0)).toBe(value);
         });
       }
     });
@@ -231,7 +173,8 @@ describe("Cursor Write Functions", () => {
 
   describe("Little Endian", () => {
     beforeEach(() => {
-      cursor = new Cursor(new DataView(new ArrayBuffer(64)), true);
+      cursor = new Cursor(64);
+      cursor.LE = true;
     });
 
     describe("Cursor#write u8 NumberType", () => {
@@ -253,29 +196,6 @@ describe("Cursor Write Functions", () => {
         });
         test("contains the correct value", () => {
           expect(cursor.view.getUint8(0)).toBe(value);
-        });
-      }
-    });
-
-    describe("Cursor#write i8 NumberType", () => {
-      const value = -128;
-
-      describe("Cursor#writeUint16", () => {
-        beforeEach(() => cursor.writeInt8(value));
-        testWriteInt8();
-      });
-
-      describe("Cursor#write", () => {
-        beforeEach(() => cursor.write(i8, value));
-        testWriteInt8();
-      });
-
-      function testWriteInt8() {
-        test("increments the byte offset", () => {
-          expect(cursor.position).toBe(1);
-        });
-        test("contains the correct value", () => {
-          expect(cursor.view.getInt8(0)).toBe(value);
         });
       }
     });
@@ -303,29 +223,6 @@ describe("Cursor Write Functions", () => {
       }
     });
 
-    describe("i16 NumberType", () => {
-      const value = -32_768;
-
-      describe("Cursor#writeInt16", () => {
-        beforeEach(() => cursor.writeInt16(value));
-        testWriteInt16();
-      });
-
-      describe("Cursor#write", () => {
-        beforeEach(() => cursor.write(i16, value));
-        testWriteInt16();
-      });
-
-      function testWriteInt16() {
-        test("increments the byte offset", () => {
-          expect(cursor.position).toBe(2);
-        });
-        test("contains the correct value", () => {
-          expect(cursor.view.getInt16(0, true)).toBe(value);
-        });
-      }
-    });
-
     describe("Cursor#write u32 NumberType", () => {
       const value = 4_294_967_295;
 
@@ -345,29 +242,6 @@ describe("Cursor Write Functions", () => {
         });
         test("contains the correct value", () => {
           expect(cursor.view.getUint32(0, true)).toBe(value);
-        });
-      }
-    });
-
-    describe("Cursor#write i32 NumberType", () => {
-      const value = -2_147_483_648;
-
-      describe("Cursor#writeUint32", () => {
-        beforeEach(() => cursor.writeInt32(value));
-        testWriteInt32();
-      });
-
-      describe("Cursor#write", () => {
-        beforeEach(() => cursor.write(i32, value));
-        testWriteInt32();
-      });
-
-      function testWriteInt32() {
-        test("increments the byte offset", () => {
-          expect(cursor.position).toBe(4);
-        });
-        test("contains the correct value", () => {
-          expect(cursor.view.getInt32(0, true)).toBe(value);
         });
       }
     });
@@ -450,7 +324,8 @@ describe("Cursor Write Functions", () => {
 describe("Cursor Read Functions", () => {
   describe("Big Endian", () => {
     beforeEach(() => {
-      cursor = new Cursor(new DataView(new ArrayBuffer(64)));
+      cursor = new Cursor(64);
+      cursor.BE = true;
     });
 
     describe("u8 NumberType", () => {
@@ -592,7 +467,8 @@ describe("Cursor Read Functions", () => {
 
   describe("Little Endian", () => {
     beforeEach(() => {
-      cursor = new Cursor(new DataView(new ArrayBuffer(64)), true);
+      cursor = new Cursor(64);
+      cursor.LE = true;
     });
 
     describe("u8 NumberType", () => {

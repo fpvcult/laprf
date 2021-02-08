@@ -21,7 +21,7 @@ module.exports = {
     },
     'import/resolver': {
       node: {
-        extensions: ['.js', , '.ts'],
+        extensions: ['.js', '.ts'],
       },
     },
   },
@@ -29,6 +29,7 @@ module.exports = {
     'no-constant-condition': ['error', { checkLoops: false }],
     '@typescript-eslint/explicit-function-return-type': 'off',
     '@typescript-eslint/no-use-before-define': ['error', { functions: false }],
+    '@typescript-eslint/no-var-requires': 'off',
     // Fixes errors about missing `ts` extension on imports
     // https://github.com/benmosher/eslint-plugin-import/issues/1615
     'import/extensions': [

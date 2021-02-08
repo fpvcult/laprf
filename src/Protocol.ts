@@ -1,12 +1,12 @@
 import type { DeviceRecord, SetSlotInput } from './types';
-import Encoder from './Encoder';
-import Decoder from './Decoder';
-import Frequency from './Frequency';
-import { u8, u16, u32, f32 } from './NumberType';
-import { RecordType, ErrorCode } from './const';
+import { Encoder } from './Encoder';
+import { Decoder } from './Decoder';
+import { Frequency } from './Frequency';
+import { u8, u16, u32, f32 } from './Numbers';
+import { RecordType, RfSetupField, SettingsField, TimeField, ErrorCode } from './const';
 import { splitRecords } from './helpers';
 
-export default class Protocol {
+export class Protocol {
   static DEBUG = false;
 
   /**
@@ -16,7 +16,7 @@ export default class Protocol {
    */
   static getRctTime(): ArrayBuffer {
     return new Encoder(RecordType.time)
-      .write(u8, 0x02) // `rtcTime`
+      .write(u8, TimeField.rtcTime) // `rtcTime`
       .write(u8, 0x00)
       .finishRecord();
   }
@@ -26,7 +26,9 @@ export default class Protocol {
    * @returns {Uint8Array} An encoded packet to request `minLapTime'.
    */
   static getMinLapTime(): ArrayBuffer {
-    return new Encoder(RecordType.settings).encodeField(0x026, u32, 0x00).finishRecord();
+    return new Encoder(RecordType.settings)
+      .encodeField(SettingsField.minLapTime, u32, 0x00)
+      .finishRecord();
   }
 
   /**
@@ -35,7 +37,9 @@ export default class Protocol {
    * @returns {Uint8Array} An encoded packet to set `minLapTime'.
    */
   static setMinLapTime(milliseconds: number): ArrayBuffer {
-    return new Encoder(RecordType.settings).encodeField(0x26, u32, milliseconds).finishRecord();
+    return new Encoder(RecordType.settings)
+      .encodeField(SettingsField.minLapTime, u32, milliseconds)
+      .finishRecord();
   }
 
   /**
@@ -46,10 +50,10 @@ export default class Protocol {
   static getRfSetup(slotIndex?: number): ArrayBuffer {
     const record = new Encoder(RecordType.rfSetup);
     if (typeof slotIndex === 'number') {
-      record.encodeField(0x01, u8, slotIndex);
+      record.encodeField(RfSetupField.slotIndex, u8, slotIndex);
     } else {
       for (let i = 1; i <= 8; i++) {
-        record.encodeField(0x01, u8, i);
+        record.encodeField(RfSetupField.slotIndex, u8, i);
       }
     }
     return record.finishRecord();
@@ -74,13 +78,13 @@ export default class Protocol {
     }
 
     return new Encoder(RecordType.rfSetup)
-      .encodeField(0x01, u8, slotId)
-      .encodeField(0x20, u16, enabled ? 1 : 0)
-      .encodeField(0x21, u16, channel.channel)
-      .encodeField(0x22, u16, channel.band)
-      .encodeField(0x23, f32, threshold)
-      .encodeField(0x24, u16, gain)
-      .encodeField(0x25, u16, channel.frequency)
+      .encodeField(RfSetupField.slotIndex, u8, slotId)
+      .encodeField(RfSetupField.enabled, u16, enabled ? 1 : 0)
+      .encodeField(RfSetupField.channel, u16, channel.channel)
+      .encodeField(RfSetupField.band, u16, channel.band)
+      .encodeField(RfSetupField.threshold, f32, threshold)
+      .encodeField(RfSetupField.gain, u16, gain)
+      .encodeField(RfSetupField.frequency, u16, channel.frequency)
       .finishRecord();
   }
 

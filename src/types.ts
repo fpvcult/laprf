@@ -1,6 +1,25 @@
-export type SlotId = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
-
 export type Maybe<T> = T | undefined;
+
+interface ReadNumber {
+  (this: DataView, byteOffset: number, littleEndian?: boolean): number;
+}
+
+interface WriteNumber {
+  (this: DataView, byteOffset: number, value: number, littleEndian?: boolean): void;
+}
+
+export type ByteLength = 1 | 2 | 4 | 8;
+
+/**
+ * An interface to help build serial protocol schemas.
+ */
+export interface NumberType {
+  readonly byteLength: ByteLength;
+  readonly read: ReadNumber;
+  readonly write: WriteNumber;
+}
+
+export type SlotId = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
 export interface StatusSlot {
   slotId: SlotId;
@@ -82,3 +101,20 @@ export interface SetSlotInput {
   threshold: number;
   enabled: boolean;
 }
+
+// export declare function decode(packet: Buffer): Array<DeviceRecord>;
+// export declare function getRtcTime(): Buffer;
+// export declare function getMinLapTime(): Buffer;
+// export declare function setMinLapTime(milliseconds: number): Buffer;
+// export declare function getRfSetup(slotIndex?: number): Buffer;
+// export declare function setRfSetup(settings: SetSlotInput): Buffer;
+
+// export declare function lookupChannel(name: string): Channel | undefined;
+// export declare function lookupChannel(
+//   band: number,
+//   channel: number
+// ): Channel | undefined;
+// export declare function lookupChannel(
+//   arg1: string | number,
+//   arg2?: number
+// ): Channel | undefined;

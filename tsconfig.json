@@ -1,23 +1,22 @@
 {
   "compilerOptions": {
     "allowSyntheticDefaultImports": true,
-    "lib": ["es5", "es6", "dom"],
+    "lib": ["es2020"],
+    "strict": true,
     "noEmitOnError": true,
-    "noImplicitAny": true,
-    "noImplicitThis": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitReturns": true,
     "forceConsistentCasingInFileNames": true,
-    "strict": true,
     "pretty": true,
     "skipLibCheck": true,
-    "target": "es5",
+    "target": "es2020",
+    "module": "es2020",
     "moduleResolution": "node",
     "sourceMap": false,
-    "types": ["node"]
+    "declaration": true
   },
   "include": ["src/**/*"],
-  "exclude": ["dist", "node_modules", "**/*.test.ts"]
+  "exclude": ["lib", "node_modules", "**/*.test.ts"]
 }

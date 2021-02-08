@@ -52,7 +52,7 @@ for (let i = 0; i < order.length; i++) {
   }
 }
 
-export default class Frequency {
+export class Frequency {
   static get(name: string): Channel | undefined;
   static get(band: number, channel: number): Channel | undefined;
   static get(arg1: string | number, arg2?: number): Channel | undefined {

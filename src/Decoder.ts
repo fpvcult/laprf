@@ -24,7 +24,7 @@ import {
   TimeField,
 } from './const';
 
-export default class Decoder {
+export class Decoder {
   private view: DataView;
   private cursor: Cursor;
 
@@ -34,7 +34,8 @@ export default class Decoder {
    */
   constructor(private buffer: ArrayBuffer, private debug = false) {
     this.view = new DataView(buffer);
-    this.cursor = new Cursor(this.view, true);
+    this.cursor = new Cursor(this.view);
+    this.cursor.LE = true;
   }
 
   /**
