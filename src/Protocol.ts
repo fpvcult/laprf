@@ -92,10 +92,10 @@ export class Protocol {
 
   /**
    * Deserialize a LapRF Packet.
-   * @param {ArrayBuffer} buffer The raw LapRF packet to deserialize.
+   * @param {DataView} buffer The raw LapRF packet to deserialize.
    * @returns {DeviceRecord[]} The deserialized records.
    */
-  static decode(buffer: ArrayBuffer): DeviceRecord[] {
+  static decode(buffer: DataView): DeviceRecord[] {
     const records: DeviceRecord[] = [];
     const buffers = splitRecords(buffer);
 

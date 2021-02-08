@@ -27,7 +27,7 @@ function reflect(input: number, nbits: number): number {
     if ((shift & 0x01) === 0x01) {
       output |= 1 << (nbits - 1 - i);
     }
-    shift >>= 1; // shift = shift >> 1;
+    shift >>= 1;
   }
   return output;
 }

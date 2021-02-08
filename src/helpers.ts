@@ -26,9 +26,9 @@ export function escape(input: Uint8Array): ArrayBuffer {
 /**
  * Unescaped a LapRF packet.
  * @param {Uint8Array} input Raw record received from a LapRF.
- * @returns {ArrayBuffer} The `input` with content unescaped.
+ * @returns {DataView} The `input` with content unescaped.
  */
-export function unescape(input: Uint8Array): ArrayBuffer {
+export function unescape(input: Uint8Array): DataView {
   const output = new Uint8Array(MAX_RECORD_LEN);
   let position = 0;
   let escaped = false;
@@ -36,6 +36,7 @@ export function unescape(input: Uint8Array): ArrayBuffer {
 
   for (let offset = 0, len = input.byteLength; offset < len; offset++) {
     byte = input[offset];
+
     if (escaped) {
       escaped = false;
       output[position++] = byte - ESC_OFFSET;
@@ -44,12 +45,12 @@ export function unescape(input: Uint8Array): ArrayBuffer {
         case EOR:
           output[position++] = byte;
           // * Important to use the ou
-          return output.buffer.slice(0, position);
+          return new DataView(output.buffer, 0, position);
         case ESC:
           escaped = true;
           break;
         default:
-          output[position] = byte;
+          output[position++] = byte;
       }
     }
   }
@@ -59,12 +60,12 @@ export function unescape(input: Uint8Array): ArrayBuffer {
 
 /**
  * Split a LapRF packet into individual records.
- * @param {ArrayBuffer} buffer An LapRF packet.
- * @returns {ArrayBuffer[]} The unescaped records contained in the `buffer`.
+ * @param {DataView} buffer An LapRF packet.
+ * @returns {DataView[]} The unescaped records contained in the `buffer`.
  */
-export function splitRecords(buffer: ArrayBuffer): ArrayBuffer[] {
-  const input = new Uint8Array(buffer);
-  const output: ArrayBuffer[] = [];
+export function splitRecords(view: DataView): DataView[] {
+  const input = new Uint8Array(view.buffer, view.byteOffset, view.byteLength);
+  const output: DataView[] = [];
   let position = 0;
 
   while (true) {
@@ -82,6 +83,26 @@ export function splitRecords(buffer: ArrayBuffer): ArrayBuffer[] {
   }
 
   return output;
+}
+
+interface OfArrayBuffer {
+  buffer: ArrayBuffer;
+  byteOffset: number;
+  byteLength: number;
+}
+
+// eslint-disable-next-line @typescript-eslint/ban-types
+type OfArrayBufferConstructor<T extends {} = {}> = new (
+  buffer: ArrayBuffer,
+  byteOffset: number,
+  byteLength: number
+) => T;
+
+export function convert<T extends OfArrayBuffer, U>(
+  from: T,
+  constructor: OfArrayBufferConstructor<U>
+): U {
+  return new constructor(from.buffer, from.byteOffset, from.byteLength);
 }
 
 /* eslint-disable @typescript-eslint/ban-types */

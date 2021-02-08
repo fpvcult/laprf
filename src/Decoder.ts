@@ -23,7 +23,7 @@ import {
   SettingsField,
   TimeField,
 } from './const';
-import { isUint8Array } from './helpers';
+import { isUint8Array, isDataView } from './helpers';
 
 export class Decoder {
   private cursor: Cursor;
@@ -33,10 +33,12 @@ export class Decoder {
    * @param {ArrayBuffer|Uint8Array} buffer The byte array of the record to decode.
    * @param {boolean} [debug] Log debug information.
    */
-  constructor(buffer: ArrayBuffer | Uint8Array, private debug = false) {
+  constructor(buffer: ArrayBuffer | Uint8Array | DataView, private debug = false) {
     if (isUint8Array(buffer)) {
       const view = new DataView(buffer.buffer, buffer.byteOffset, buffer.byteLength);
       this.cursor = new Cursor(view);
+    } else if (isDataView(buffer)) {
+      this.cursor = new Cursor(buffer);
     } else {
       this.cursor = new Cursor(new DataView(buffer));
     }
@@ -56,7 +58,7 @@ export class Decoder {
       panic(`${ErrorCode.InvalidRecord}, ${msg}`);
     }
 
-    Crc.verify(this.cursor.toDataView()); // * Kind of hackish
+    Crc.verify(this.cursor.view); // * Kind of hackish
     this.cursor.skip(2); // Skip CRC uint16
 
     const type = this.cursor.readUint16();
