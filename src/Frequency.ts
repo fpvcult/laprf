@@ -1,3 +1,5 @@
+import type { Channel } from './types';
+
 const bandOrder = 'FREBA';
 
 const bands: { [key: string]: number[] } = {
@@ -13,24 +15,9 @@ interface IndexOf<T> {
   [index: number]: T;
 }
 
-export class Channel {
-  constructor(
-    readonly band: number,
-    readonly channel: number,
-    readonly frequency: number,
-    readonly name: string
-  ) {}
-}
-
-const config = 'laprf';
-
 const ordered: Channel[] = [];
 const byNameOrIndex: IndexOf<Channel> = {};
 const byFrequency: IndexOf<Array<Channel>> = {};
-
-if (config !== 'laprf' && config !== 'rx5808') {
-  throw new Error('Invalid configuration input');
-}
 
 const order = bandOrder.split('');
 
@@ -44,7 +31,7 @@ for (let i = 0; i < order.length; i++) {
     const index = i * 8 + j;
     const frequency = frequencies[j];
     const name = bandName + channel;
-    const current = new Channel(band, channel, frequency, name);
+    const current = { band, channel, frequency, name };
     ordered.push(current);
     byNameOrIndex[name] = byNameOrIndex[index] = current;
     byFrequency[frequency] = byFrequency[frequency] || [];
