@@ -1,13 +1,7 @@
 /// <reference types="jest" />
 
 import { Decoder } from '../src/Decoder';
-import { convert } from '../src/helpers';
-import { toBytes } from './util';
-
-const RF_SETUP_RECORD = convert(toBytes('5a2500065d02da01010120020100220201002102020024023a00230400808944250280165b'), DataView); // prettier-ignore
-const SETTINGS_RECORD = convert(toBytes('5a0e00a40507da2604701700005b'), DataView);
-const STATUS_RECORD = convert(toBytes('5a610043c50ada21022d10230101240400000000010101220400404f44010102220400804f44010103220400000000010104220400000000010105220400000000010106220400000000010107220400000000010108220400000000030200005b'), DataView); // prettier-ignore
-const TIME_RECORD = convert(toBytes('5a1c00d52b0cda02086051fcaf01000000200800000000000000005b'), DataView); // prettier-ignore
+import * as mock from './mock';
 
 describe('Decoder', () => {
   test('decode RfSetupRecord', () => {
@@ -21,17 +15,27 @@ describe('Decoder', () => {
       threshold: 1100,
       frequency: 5760,
     };
-
-    const decoded = new Decoder(RF_SETUP_RECORD).decode();
-
+    const decoded = new Decoder(mock.data.rx.rfSetupRecordSingle).decode();
     expect(decoded).toEqual(expected);
   });
 
   test('decode SettingsRecord', () => {
     const expected = { type: 'settings', minLapTime: 6000 };
+    const decoded = new Decoder(mock.data.rx.settingsRecord).decode();
+    expect(decoded).toEqual(expected);
+  });
 
-    const decoded = new Decoder(SETTINGS_RECORD).decode();
-
+  test('decode PassingRecord', () => {
+    const expected = {
+      type: 'passing',
+      decoderId: 3932228,
+      slotId: 2,
+      passingNumber: 1,
+      rtcTime: 79937000,
+      peakHeight: 2298,
+      flags: 0,
+    };
+    const decoded = new Decoder(mock.data.rx.passingRecord).decode();
     expect(decoded).toEqual(expected);
   });
 
@@ -53,17 +57,13 @@ describe('Decoder', () => {
         '8': { lastRssi: 0 },
       },
     };
-
-    const decoded = new Decoder(STATUS_RECORD).decode();
-
+    const decoded = new Decoder(mock.data.rx.statusRecord).decode();
     expect(decoded).toEqual(expected);
   });
 
   test('decode TimeRecord', () => {
     const expected = { type: 'time', rtcTime: 7247516000 };
-
-    const decoded = new Decoder(TIME_RECORD).decode();
-
+    const decoded = new Decoder(mock.data.rx.timeRecord).decode();
     expect(decoded).toEqual(expected);
   });
 });
