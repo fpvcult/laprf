@@ -2,7 +2,7 @@
   "name": "@fpvcult/laprf",
   "description": "A Node.js LapRF Protocol Library",
   "repository": "github:fpvcult/laprf",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "./lib/cjs/index.js",
   "module": "./lib/esm/index.js",
   "files": [

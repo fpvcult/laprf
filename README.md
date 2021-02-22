@@ -33,9 +33,9 @@ class Protocol {
     enabled: boolean;
   }): Uint8Array;
 
-  // Takes an `ArrayBuffer` containing a LapRF packet and return an array of
+  // Takes an `DataView` containing a LapRF packet and return an array of
   // `DeviceRecord`s (A LapRF packet can contain more than one record).
-  static decode(packet: ArrayBuffer): DeviceRecord[];
+  static decode(packet: DataView): DeviceRecord[];
 }
 ```
 
@@ -118,7 +118,8 @@ client.connect(5403, '192.168.1.9');
 client.write(Protocol.setMinLapTime(10_000));
 
 client.on('data', (buffer: Buffer) => {
-  const records = Protocol.decode(buffer.buffer); // Argument to decode needs to be an ArrayBuffer
+  const view = new DataView(buffer.buffer, buffer.byteOffset, buffer.byteLength);
+  const records = Protocol.decode(view); // Argument needs to be an DataView
 
   // ... do something with the records
 });
