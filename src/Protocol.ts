@@ -17,7 +17,7 @@
  *
  */
 
-import type { DeviceRecord, SetSlotInput } from './types';
+import type { DeviceRecord, RfSetupSlotInput } from './types';
 import { Encoder } from './Encoder';
 import { Decoder } from './Decoder';
 import { Frequency } from './Frequency';
@@ -82,7 +82,7 @@ export class Protocol {
 
   /**
    * Serialize a LapRF packet to set a `rfSetup` slot.
-   * @param {SetSlotInput} settings The options to configure the slot.
+   * @param {RfSetupSlotInput} settings The options to configure the slot.
    * @returns {Uint8Array} An encoded packet to set a `rfSetup' slot.
    */
   static setRfSetup({
@@ -91,7 +91,7 @@ export class Protocol {
     gain = 51,
     threshold = 900,
     enabled = true,
-  }: SetSlotInput): Uint8Array {
+  }: RfSetupSlotInput): Uint8Array {
     const channel = Frequency.get(channelName);
 
     if (!channel) {

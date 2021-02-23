@@ -113,7 +113,7 @@ export interface Channel {
   readonly name: string;
 }
 
-export interface SetSlotInput {
+export interface RfSetupSlotInput {
   slotId: SlotId;
   channelName: string;
   gain: number;

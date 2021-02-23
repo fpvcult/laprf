@@ -27,6 +27,7 @@ export type {
   TimeRecord,
   DeviceRecord,
   Channel,
+  RfSetupSlotInput,
 } from './types';
 
 export { SLOT_IDS } from './const';
