@@ -21,7 +21,7 @@ class Protocol {
   static setMinLapTime(milliseconds: number): Uint8Array;
 
   // Serialize a LapRF packet to set the status interval.
-  static setStatusInterval(milliseconds: number): Uint8Array {
+  static setStatusInterval(milliseconds: number): Uint8Array;
 
   // Serialize a LapRF packet to request the rfSetup of either an individual slot,
   // or all slots if `slotIndex` isn't provided.

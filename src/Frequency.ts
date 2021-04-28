@@ -17,7 +17,7 @@
  *
  */
 
-import type { Channel, ChannelName } from './types';
+import type { Channel, ChannelName, BandIndex, ChannelIndex } from './types';
 
 const bandOrder = 'FREBA';
 
@@ -60,7 +60,7 @@ for (let i = 0; i < order.length; i++) {
 
 export class Frequency {
   static get(name: ChannelName): Channel | undefined;
-  static get(band: 1 | 2 | 3 | 4 | 5, channel: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8): Channel | undefined;
+  static get(band: BandIndex, channel: ChannelIndex): Channel | undefined;
   static get(arg1: string | number, arg2?: number): Channel | undefined {
     if (typeof arg1 === 'string') {
       const val = byNameOrIndex[arg1.toUpperCase()];

@@ -27,6 +27,9 @@ export type {
   TimeRecord,
   DeviceRecord,
   Channel,
+  ChannelName,
+  ChannelIndex,
+  BandIndex,
   RfSetupSlotInput,
 } from './types';
 

@@ -108,6 +108,8 @@ type BandF = 'F1' | 'F2' | 'F3' | 'F4' | 'F5' | 'F6' | 'F7' | 'F8';
 type BandR = 'R1' | 'R2' | 'R3' | 'R4' | 'R5' | 'R6' | 'R7' | 'R8';
 
 export type ChannelName = BandA | BandB | BandE | BandF | BandR;
+export type BandIndex = 1 | 2 | 3 | 4 | 5;
+export type ChannelIndex = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
 export interface Channel {
   readonly band: number;
