@@ -17,7 +17,7 @@
  *
  */
 
-import type { Channel } from './types';
+import type { Channel, ChannelName } from './types';
 
 const bandOrder = 'FREBA';
 
@@ -49,7 +49,7 @@ for (let i = 0; i < order.length; i++) {
     const channel = j + 1;
     const index = i * 8 + j;
     const frequency = frequencies[j];
-    const name = bandName + channel;
+    const name = (bandName + channel) as ChannelName;
     const current = { band, channel, frequency, name };
     ordered.push(current);
     byNameOrIndex[name] = byNameOrIndex[index] = current;
@@ -59,11 +59,12 @@ for (let i = 0; i < order.length; i++) {
 }
 
 export class Frequency {
-  static get(name: string): Channel | undefined;
-  static get(band: number, channel: number): Channel | undefined;
+  static get(name: ChannelName): Channel | undefined;
+  static get(band: 1 | 2 | 3 | 4 | 5, channel: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8): Channel | undefined;
   static get(arg1: string | number, arg2?: number): Channel | undefined {
     if (typeof arg1 === 'string') {
-      return byNameOrIndex[arg1.toUpperCase()];
+      const val = byNameOrIndex[arg1.toUpperCase()];
+      return val;
     } else if (typeof arg1 === 'number' && typeof arg2 === 'number') {
       const index = (arg1 - 1) * 8 + (arg2 - 1);
       return byNameOrIndex[index];

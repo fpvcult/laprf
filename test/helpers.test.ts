@@ -1,8 +1,17 @@
 /// <reference types="jest" />
 
+import * as Crc from '../src/Crc';
 import { escape, unescape, splitRecords, convert } from '../src/helpers';
 import { SOR, EOR, ESC, ESC_OFFSET } from '../src/const';
 import * as mock from './mock';
+
+describe('Crc.compute', () => {
+  test('computes expected CRC value for a LapRF packet', () => {
+    const expected = 56599;
+    const crc = Crc.compute(convert(mock.data.crc.recordWithoutCrc, DataView));
+    expect(crc).toEqual(expected);
+  });
+});
 
 describe('unescape', () => {
   test('removes escapes', () => {

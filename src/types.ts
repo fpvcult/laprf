@@ -40,11 +40,6 @@ export interface NumberType {
 
 export type SlotId = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
-export interface StatusSlot {
-  slotId: SlotId;
-  lastRssi: number;
-}
-
 export type StatusSlots = Record<SlotId, { lastRssi: number }>;
 
 export interface RfSetupRecord {
@@ -106,16 +101,24 @@ export type DeviceRecord =
   | StatusRecord
   | TimeRecord;
 
+type BandA = 'A1' | 'A2' | 'A3' | 'A4' | 'A5' | 'A6' | 'A7' | 'A8';
+type BandB = 'B1' | 'B2' | 'B3' | 'B4' | 'B5' | 'B6' | 'B7' | 'B8';
+type BandE = 'E1' | 'E2' | 'E3' | 'E4' | 'E5' | 'E6' | 'E7' | 'E8';
+type BandF = 'F1' | 'F2' | 'F3' | 'F4' | 'F5' | 'F6' | 'F7' | 'F8';
+type BandR = 'R1' | 'R2' | 'R3' | 'R4' | 'R5' | 'R6' | 'R7' | 'R8';
+
+export type ChannelName = BandA | BandB | BandE | BandF | BandR;
+
 export interface Channel {
   readonly band: number;
   readonly channel: number;
   readonly frequency: number;
-  readonly name: string;
+  readonly name: ChannelName;
 }
 
 export interface RfSetupSlotInput {
   slotId: SlotId;
-  channelName: string;
+  channelName: ChannelName;
   gain: number;
   threshold: number;
   enabled: boolean;

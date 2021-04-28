@@ -20,6 +20,9 @@ class Protocol {
   // Serialize a LapRF packet to set the minimum lap time.
   static setMinLapTime(milliseconds: number): Uint8Array;
 
+  // Serialize a LapRF packet to set the status interval.
+  static setStatusInterval(milliseconds: number): Uint8Array {
+
   // Serialize a LapRF packet to request the rfSetup of either an individual slot,
   // or all slots if `slotIndex` isn't provided.
   static getRfSetup(slotIndex?: number): Uint8Array;
@@ -27,7 +30,7 @@ class Protocol {
   // Serialize a LapRF packet to configure a rfSetup slot.
   static setRfSetup(input: {
     slotId: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
-    channelName: string;
+    channelName: ChannelName;
     gain: number;
     threshold: number;
     enabled: boolean;

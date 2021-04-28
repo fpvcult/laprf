@@ -17,16 +17,19 @@
  *
  */
 
-import type { DeviceRecord, RfSetupSlotInput } from './types';
+import type { DeviceRecord, RfSetupSlotInput, Maybe } from './types';
 import { Encoder } from './Encoder';
 import { Decoder } from './Decoder';
 import { Frequency } from './Frequency';
 import { u8, u16, u32, f32 } from './Numbers';
-import { RecordType, RfSetupField, SettingsField, TimeField, ErrorCode } from './const';
-import { splitRecords } from './helpers';
+import { RecordType, RfSetupField, SettingsField, TimeField, ErrorCode, EOR, SOR } from './const';
+import { splitRecords, unescape } from './helpers';
 
 export class Protocol {
   static DEBUG = false;
+
+  static SOR = SOR;
+  static EOR = EOR;
 
   /**
    * Serialize a LapRF packet to request the `rtcTime`.
@@ -64,6 +67,28 @@ export class Protocol {
   }
 
   /**
+   * Serialize a LapRF packet to get the `statusInterval`.
+   * ISSUE: Requesting the status interval does not work.
+   * @returns {Uint8Array} An encoded packet to request `statusInterval'.
+   */
+  // static getStatusInterval(): Uint8Array {
+  //   return new Encoder(RecordType.settings)
+  //     .encodeField(SettingsField.statusInterval, u16, 0x00)
+  //     .finishRecord();
+  // }
+
+  /**
+   * Serialize a LapRF packet to set the `statusInterval`.
+   * @param {number} milliseconds The number of milliseconds to use as the status interval.
+   * @returns {Uint8Array} An encoded packet to set `statusInterval'.
+   */
+  static setStatusInterval(milliseconds: number): Uint8Array {
+    return new Encoder(RecordType.settings)
+      .encodeField(SettingsField.statusInterval, u16, milliseconds)
+      .finishRecord();
+  }
+
+  /**
    * Serialize a LapRF packet to request the `rfSetup`.
    * @param {number} [slotIndex] Optionally request only a single slot.
    * @returns {Uint8Array} An encoded packet to request `rfSetup'.
@@ -95,7 +120,7 @@ export class Protocol {
     const channel = Frequency.get(channelName);
 
     if (!channel) {
-      throw new Error(`[LapRF Error] ${ErrorCode.InvalidChannelName}`);
+      throw new Error(`[LapRF Error] ${ErrorCode.InvalidChannelName} Invalid channel name`);
     }
 
     return new Encoder(RecordType.rfSetup)
@@ -130,5 +155,23 @@ export class Protocol {
     }
 
     return records;
+  }
+
+  /**
+   * Deserialize a LapRF record.
+   * @param {DataView} buffer An unescaped LapRF record to deserialize.
+   * @returns {DeviceRecord | undefined} The deserialized record.
+   */
+  static decodeRecord(buffer: DataView): Maybe<DeviceRecord> {
+    return new Decoder(buffer, Protocol.DEBUG).decode();
+  }
+
+  /**
+   * Unescaped a LapRF record.
+   * @param {Uint8Array} input Raw record received from a LapRF.
+   * @returns {DataView} The `input` with content unescaped.
+   */
+  static unescape(input: Uint8Array): DataView {
+    return unescape(input);
   }
 }
