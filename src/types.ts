@@ -38,16 +38,16 @@ export interface NumberType {
   readonly write: WriteNumber;
 }
 
-export type SlotId = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+export type SlotIndex = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
-export type StatusSlots = Record<SlotId, { lastRssi: number }>;
+export type StatusSlots = Record<SlotIndex, { lastRssi: number }>;
 
 export interface RfSetupRecord {
   type: 'rfSetup';
-  slotId: SlotId;
+  slotIndex: SlotIndex;
   enabled: number;
-  channel: number;
-  band: number;
+  channel: ChannelIndex;
+  band: BandIndex;
   threshold: number;
   gain: number;
   frequency: number;
@@ -55,7 +55,7 @@ export interface RfSetupRecord {
 
 export interface RssiRecord {
   type: 'rssi';
-  slotId: SlotId;
+  slotIndex: SlotIndex;
   minRssi: number;
   maxRssi: number;
   meanRssi: number;
@@ -70,7 +70,7 @@ export interface SettingsRecord {
 
 export interface PassingRecord {
   type: 'passing';
-  slotId: SlotId;
+  slotIndex: SlotIndex;
   rtcTime: number;
   decoderId: number;
   passingNumber: number;
@@ -112,15 +112,16 @@ export type BandIndex = 1 | 2 | 3 | 4 | 5;
 export type ChannelIndex = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
 export interface Channel {
-  readonly band: number;
-  readonly channel: number;
+  readonly band: BandIndex;
+  readonly channel: ChannelIndex;
   readonly frequency: number;
   readonly name: ChannelName;
 }
 
 export interface RfSetupSlotInput {
-  slotId: SlotId;
-  channelName: ChannelName;
+  slotIndex: SlotIndex;
+  band: BandIndex;
+  channel: ChannelIndex;
   gain: number;
   threshold: number;
   enabled: boolean;

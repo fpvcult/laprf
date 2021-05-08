@@ -29,16 +29,20 @@ class Protocol {
 
   // Serialize a LapRF packet to configure a rfSetup slot.
   static setRfSetup(input: {
-    slotId: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
-    channelName: ChannelName;
+    slotIndex: SlotIndex;
+    band: BandIndex;
+    channel: ChannelIndex;
     gain: number;
     threshold: number;
     enabled: boolean;
   }): Uint8Array;
 
-  // Takes an `DataView` containing a LapRF packet and return an array of
+  // Takes a `DataView` containing a LapRF packet and return an array of
   // `DeviceRecord`s (A LapRF packet can contain more than one record).
   static decode(packet: DataView): DeviceRecord[];
+
+  // Takes a `DataView` containing an unescaped LapRF record and returns a `DeviceRecord`.
+  static decodeRecord(record: DataView): DeviceRecord;
 }
 ```
 
@@ -47,10 +51,10 @@ class Protocol {
 ```ts
 interface RfSetupRecord {
   type: 'rfSetup';
-  slotId: SlotId;
+  slotIndex: SlotIndex;
   enabled: number;
-  channel: number;
-  band: number;
+  channel: ChannelIndex;
+  band: BandIndex;
   threshold: number;
   gain: number;
   frequency: number;
@@ -58,7 +62,7 @@ interface RfSetupRecord {
 
 interface RssiRecord {
   type: 'rssi';
-  slotId: SlotId;
+  slotIndex: SlotIndex;
   minRssi: number;
   maxRssi: number;
   meanRssi: number;
@@ -73,7 +77,7 @@ interface SettingsRecord {
 
 interface PassingRecord {
   type: 'passing';
-  slotId: SlotId;
+  slotIndex: SlotIndex;
   rtcTime: number;
   decoderId: number;
   passingNumber: number;
@@ -87,10 +91,7 @@ interface StatusRecord {
   gateState: number;
   batteryVoltage: number;
   detectionCount: number;
-  slots: {
-    slotId: SlotId;
-    lastRssi: number;
-  };
+  slots: Record<SlotIndex, { lastRssi: number }>;
 }
 
 interface TimeRecord {

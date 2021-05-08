@@ -43,9 +43,11 @@ describe('Protocol', () => {
   test('setRfSetup', () => {
     const expected = mock.data.tx.setRfSetupSingle;
     const decoded = Protocol.setRfSetup({
-      slotId: 1,
+      slotIndex: 1,
       enabled: true,
-      channelName: 'E2',
+      band: 3,
+      channel: 2,
+      // channelName: 'E2',
       gain: 51,
       threshold: 900,
     });

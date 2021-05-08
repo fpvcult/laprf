@@ -7,7 +7,7 @@ describe('Decoder', () => {
   test('decode RfSetupRecord', () => {
     const expected = {
       type: 'rfSetup',
-      slotId: 1,
+      slotIndex: 1,
       enabled: 1,
       band: 1,
       channel: 2,
@@ -29,7 +29,7 @@ describe('Decoder', () => {
     const expected = {
       type: 'passing',
       decoderId: 3932228,
-      slotId: 2,
+      slotIndex: 2,
       passingNumber: 1,
       rtcTime: 79937000,
       peakHeight: 2298,

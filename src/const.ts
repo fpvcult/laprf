@@ -17,7 +17,7 @@
  *
  */
 
-import type { SlotId } from './types';
+import type { SlotIndex, BandIndex, ChannelIndex } from './types';
 
 export const MAX_RECORD_LEN = 1024;
 export const MAX_SLOTS = 8;
@@ -27,7 +27,9 @@ export const EOR = 0x5b;
 export const ESC = 0x5c;
 export const ESC_OFFSET = 0x40;
 
-export const SLOT_IDS = [1, 2, 3, 4, 5, 6, 7, 8] as SlotId[];
+export const SLOT_IDS = [1, 2, 3, 4, 5, 6, 7, 8] as SlotIndex[];
+export const BAND_INDEXES = [1, 2, 3, 4, 5] as BandIndex[];
+export const CHANNEL_INDEXES = [1, 2, 3, 4, 5, 6, 7, 8] as ChannelIndex[];
 
 export const enum RecordType {
   rssi = 0xda01,

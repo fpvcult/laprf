@@ -18,7 +18,7 @@
  */
 
 export type {
-  SlotId,
+  SlotIndex as SlotId,
   RfSetupRecord,
   RssiRecord,
   PassingRecord,

@@ -45,8 +45,8 @@ for (let i = 0; i < order.length; i++) {
   const frequencies = bands[bandName];
 
   for (let j = 0; j < frequencies.length; j++) {
-    const band = i + 1;
-    const channel = j + 1;
+    const band = (i + 1) as BandIndex;
+    const channel = (j + 1) as ChannelIndex;
     const index = i * 8 + j;
     const frequency = frequencies[j];
     const name = (bandName + channel) as ChannelName;
@@ -59,17 +59,21 @@ for (let i = 0; i < order.length; i++) {
 }
 
 export class Frequency {
-  static get(name: ChannelName): Channel | undefined;
-  static get(band: BandIndex, channel: ChannelIndex): Channel | undefined;
-  static get(arg1: string | number, arg2?: number): Channel | undefined {
+  static get(name: ChannelName): Channel;
+  static get(band: BandIndex, channel: ChannelIndex): Channel;
+  static get(arg1: ChannelName | BandIndex, arg2?: ChannelIndex): Channel {
     if (typeof arg1 === 'string') {
       const val = byNameOrIndex[arg1.toUpperCase()];
       return val;
     } else if (typeof arg1 === 'number' && typeof arg2 === 'number') {
-      const index = (arg1 - 1) * 8 + (arg2 - 1);
-      return byNameOrIndex[index];
+      return Frequency.getByIndexes(arg1, arg2);
     }
-    return undefined;
+    throw new Error(`[LapRF Error] Invalid arguments, provided: ${arg1}, ${arg2}`);
+  }
+
+  static getByIndexes(band: BandIndex, channel: ChannelIndex): Channel {
+    const index = (band - 1) * 8 + (channel - 1);
+    return byNameOrIndex[index];
   }
 
   static getByFrequency(frequency: number): Channel | Channel[] | undefined {

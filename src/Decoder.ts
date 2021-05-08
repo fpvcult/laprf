@@ -19,7 +19,9 @@
 
 import type {
   Maybe,
-  SlotId,
+  SlotIndex,
+  BandIndex,
+  ChannelIndex,
   DeviceRecord,
   RfSetupRecord,
   RssiRecord,
@@ -33,6 +35,8 @@ import * as Crc from './Crc';
 import {
   EOR,
   SLOT_IDS,
+  BAND_INDEXES,
+  CHANNEL_INDEXES,
   RecordType,
   PassingField,
   StatusField,
@@ -116,17 +120,29 @@ export class Decoder {
 
       switch (signature) {
         case RfSetupField.slotIndex:
-          record.slotId = this.decodeUint8Field() as SlotId;
+          record.slotIndex = this.decodeUint8Field() as SlotIndex;
           break;
         case RfSetupField.enabled:
           record.enabled = this.decodeUint16Field();
           break;
-        case RfSetupField.channel:
-          record.channel = this.decodeUint16Field();
+        case RfSetupField.channel: {
+          const channel = this.decodeUint16Field() as ChannelIndex;
+          if (CHANNEL_INDEXES.includes(channel)) {
+            record.channel = channel;
+          } else {
+            throw new Error(`[LapRF] Invalid Record. Invalid rfSetup channel: ${channel}`);
+          }
           break;
-        case RfSetupField.band:
-          record.band = this.decodeUint16Field();
+        }
+        case RfSetupField.band: {
+          const band = this.decodeUint16Field() as BandIndex;
+          if (BAND_INDEXES.includes(band)) {
+            record.band = band;
+          } else {
+            throw new Error(`[LapRF] Invalid Record. Invalid rfSetup band: ${band}`);
+          }
           break;
+        }
         case RfSetupField.threshold:
           record.threshold = this.decodeFloat32Field();
           break;
@@ -155,7 +171,7 @@ export class Decoder {
 
       switch (signature) {
         case RssiField.slotIndex:
-          record.slotId = this.decodeUint8Field() as SlotId;
+          record.slotIndex = this.decodeUint8Field() as SlotIndex;
           break;
         case RssiField.minRssi:
           record.minRssi = this.decodeFloat32Field();
@@ -211,7 +227,7 @@ export class Decoder {
 
       switch (signature) {
         case PassingField.slotIndex:
-          record.slotId = this.decodeUint8Field() as SlotId;
+          record.slotIndex = this.decodeUint8Field() as SlotIndex;
           break;
         case PassingField.rtcTime:
           record.rtcTime = this.decodeUint64Field();
@@ -238,10 +254,10 @@ export class Decoder {
 
   private decodeStatusRecord(): StatusRecord {
     const record: Partial<StatusRecord> = { type: 'status' };
-    const slots = {} as Record<SlotId, { lastRssi: number }>;
+    const slots = {} as Record<SlotIndex, { lastRssi: number }>;
     const length = this.cursor.byteLength;
 
-    let slotId: Maybe<SlotId> = undefined;
+    let slotId: Maybe<SlotIndex> = undefined;
 
     while (this.cursor.position < length) {
       const signature = this.cursor.readUint8();
@@ -249,7 +265,7 @@ export class Decoder {
 
       switch (signature) {
         case StatusField.slotIndex:
-          slotId = this.decodeUint8Field() as SlotId;
+          slotId = this.decodeUint8Field() as SlotIndex;
           break;
         case StatusField.flags:
           record.flags = this.decodeUint16Field();
@@ -350,6 +366,6 @@ function checkByteSize(expected: number, received: number): void {
   panic(`byte size mismatch expected: ${expected}, received: ${received}`);
 }
 
-function isSlotId(value: unknown): value is SlotId {
-  return typeof value === 'number' && SLOT_IDS.includes(value as SlotId);
+function isSlotId(value: unknown): value is SlotIndex {
+  return typeof value === 'number' && SLOT_IDS.includes(value as SlotIndex);
 }

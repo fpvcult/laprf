@@ -17,12 +17,12 @@
  *
  */
 
-import type { DeviceRecord, RfSetupSlotInput, Maybe } from './types';
+import type { SlotIndex, DeviceRecord, RfSetupSlotInput, Maybe } from './types';
 import { Encoder } from './Encoder';
 import { Decoder } from './Decoder';
 import { Frequency } from './Frequency';
 import { u8, u16, u32, f32 } from './Numbers';
-import { RecordType, RfSetupField, SettingsField, TimeField, ErrorCode, EOR, SOR } from './const';
+import { RecordType, RfSetupField, SettingsField, TimeField, EOR, SOR } from './const';
 import { splitRecords, unescape } from './helpers';
 
 export class Protocol {
@@ -90,13 +90,13 @@ export class Protocol {
 
   /**
    * Serialize a LapRF packet to request the `rfSetup`.
-   * @param {number} [slotIndex] Optionally request only a single slot.
+   * @param {SlotIndex} [slotId] Optionally request only a single slot.
    * @returns {Uint8Array} An encoded packet to request `rfSetup'.
    */
-  static getRfSetup(slotIndex?: number): Uint8Array {
+  static getRfSetup(slotId?: SlotIndex): Uint8Array {
     const record = new Encoder(RecordType.rfSetup);
-    if (typeof slotIndex === 'number') {
-      record.encodeField(RfSetupField.slotIndex, u8, slotIndex);
+    if (typeof slotId === 'number') {
+      record.encodeField(RfSetupField.slotIndex, u8, slotId);
     } else {
       for (let i = 1; i <= 8; i++) {
         record.encodeField(RfSetupField.slotIndex, u8, i);
@@ -111,20 +111,17 @@ export class Protocol {
    * @returns {Uint8Array} An encoded packet to set a `rfSetup' slot.
    */
   static setRfSetup({
-    slotId,
-    channelName,
-    gain = 51,
-    threshold = 900,
-    enabled = true,
+    slotIndex,
+    band: bandIndex,
+    channel: channelIndex,
+    gain,
+    threshold,
+    enabled,
   }: RfSetupSlotInput): Uint8Array {
-    const channel = Frequency.get(channelName);
-
-    if (!channel) {
-      throw new Error(`[LapRF Error] ${ErrorCode.InvalidChannelName} Invalid channel name`);
-    }
+    const channel = Frequency.getByIndexes(bandIndex, channelIndex);
 
     return new Encoder(RecordType.rfSetup)
-      .encodeField(RfSetupField.slotIndex, u8, slotId)
+      .encodeField(RfSetupField.slotIndex, u8, slotIndex)
       .encodeField(RfSetupField.enabled, u16, enabled ? 1 : 0)
       .encodeField(RfSetupField.channel, u16, channel.channel)
       .encodeField(RfSetupField.band, u16, channel.band)
@@ -171,7 +168,5 @@ export class Protocol {
    * @param {Uint8Array} input Raw record received from a LapRF.
    * @returns {DataView} The `input` with content unescaped.
    */
-  static unescape(input: Uint8Array): DataView {
-    return unescape(input);
-  }
+  static unescape = unescape;
 }
