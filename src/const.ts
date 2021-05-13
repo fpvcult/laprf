@@ -27,7 +27,7 @@ export const EOR = 0x5b;
 export const ESC = 0x5c;
 export const ESC_OFFSET = 0x40;
 
-export const SLOT_IDS = [1, 2, 3, 4, 5, 6, 7, 8] as SlotIndex[];
+export const SLOT_INDEXES = [1, 2, 3, 4, 5, 6, 7, 8] as SlotIndex[];
 export const BAND_INDEXES = [1, 2, 3, 4, 5] as BandIndex[];
 export const CHANNEL_INDEXES = [1, 2, 3, 4, 5, 6, 7, 8] as ChannelIndex[];
 
@@ -96,18 +96,4 @@ export const enum StatusField {
 export const enum TimeField {
   rtcTime = 0x02,
   timeRtcTime = 0x20,
-}
-
-export const enum ErrorCode {
-  CrcMismatch = 0x100,
-  InvalidPacket,
-  InvalidRecord,
-  MissingSOR,
-  MissingEOR,
-  SizeError,
-  UnknownRecordType,
-  UnknownSignatureType,
-  DeviceError,
-  RangeError,
-  InvalidChannelName,
 }

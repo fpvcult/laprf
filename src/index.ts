@@ -18,7 +18,7 @@
  */
 
 export type {
-  SlotIndex as SlotId,
+  SlotIndex,
   RfSetupRecord,
   RssiRecord,
   PassingRecord,
@@ -33,7 +33,7 @@ export type {
   RfSetupSlotInput,
 } from './types';
 
-export { SLOT_IDS } from './const';
+export { SLOT_INDEXES, BAND_INDEXES, CHANNEL_INDEXES } from './const';
 
 export { Frequency } from './Frequency';
 export { Protocol } from './Protocol';

@@ -34,7 +34,7 @@ import Cursor from './Cursor';
 import * as Crc from './Crc';
 import {
   EOR,
-  SLOT_IDS,
+  SLOT_INDEXES,
   BAND_INDEXES,
   CHANNEL_INDEXES,
   RecordType,
@@ -42,7 +42,6 @@ import {
   StatusField,
   RfSetupField,
   RssiField,
-  ErrorCode,
   SettingsField,
   TimeField,
 } from './const';
@@ -77,8 +76,7 @@ export class Decoder {
     const length = this.cursor.readUint16();
 
     if (this.cursor.byteLength !== length) {
-      const msg = `Invalid record length of ${this.cursor.byteLength} expected ${length}`;
-      panic(`${ErrorCode.InvalidRecord}, ${msg}`);
+      panic(`Invalid record length of ${this.cursor.byteLength} expected ${length}`);
     }
 
     Crc.verify(this.cursor.view); // * Kind of hackish
@@ -274,7 +272,7 @@ export class Decoder {
           record.batteryVoltage = this.decodeUint16Field();
           break;
         case StatusField.lastRssi: {
-          if (!isSlotId(slotId)) panic('Received `lastRssi` before a `slotId`');
+          if (!isSlotIndex(slotId)) panic('Received `lastRssi` before a `slotId`');
           slots[slotId] = { lastRssi: this.decodeFloat32Field() };
           slotId = undefined;
           break;
@@ -353,12 +351,12 @@ export class Decoder {
     if (!this.debug) return;
     const t = type.toString(16);
     const s = signature.toString(16);
-    console.log(`[LapRF Warning] Unknown field signature 0x${t} in record type 0x${s}`);
+    console.log(`[laprf-decoder] Unknown field signature 0x${t} in record type 0x${s}`);
   }
 }
 
 function panic(msg = 'An error occurred'): never {
-  throw new Error(`[LapRF Error] ${msg}`);
+  throw new Error(`[laprf-decoder] ${msg}`);
 }
 
 function checkByteSize(expected: number, received: number): void {
@@ -366,6 +364,6 @@ function checkByteSize(expected: number, received: number): void {
   panic(`byte size mismatch expected: ${expected}, received: ${received}`);
 }
 
-function isSlotId(value: unknown): value is SlotIndex {
-  return typeof value === 'number' && SLOT_IDS.includes(value as SlotIndex);
+function isSlotIndex(value: unknown): value is SlotIndex {
+  return typeof value === 'number' && SLOT_INDEXES.includes(value as SlotIndex);
 }

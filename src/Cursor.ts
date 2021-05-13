@@ -292,5 +292,5 @@ export default class Cursor {
 }
 
 function panic(msg = 'An error occurred'): never {
-  throw new Error(`[Cursor Error] ${msg}`);
+  throw new Error(`[laprf-cursor] ${msg}`);
 }

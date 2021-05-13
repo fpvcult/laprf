@@ -68,7 +68,7 @@ export class Frequency {
     } else if (typeof arg1 === 'number' && typeof arg2 === 'number') {
       return Frequency.getByIndexes(arg1, arg2);
     }
-    throw new Error(`[LapRF Error] Invalid arguments, provided: ${arg1}, ${arg2}`);
+    throw new Error(`[laprf-freq] Invalid arguments, provided: ${arg1}, ${arg2}`);
   }
 
   static getByIndexes(band: BandIndex, channel: ChannelIndex): Channel {

@@ -17,7 +17,7 @@
  *
  */
 
-import { ErrorCode, SOR, EOR, ESC, ESC_OFFSET, MAX_RECORD_LEN } from './const';
+import { SOR, EOR, ESC, ESC_OFFSET, MAX_RECORD_LEN } from './const';
 
 /**
  * Escape a LapRF record.
@@ -74,7 +74,7 @@ export function unescape(input: Uint8Array): DataView {
     }
   }
 
-  throw new Error(`[LapRF Error] ${ErrorCode.InvalidRecord} Failed to unescape record`);
+  throw new Error(`[laprf] Invalid record, unescape failed`);
 }
 
 /**

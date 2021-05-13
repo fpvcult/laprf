@@ -18,7 +18,6 @@
  */
 
 /* eslint-disable no-bitwise */
-import { ErrorCode } from './const';
 
 const crc16Table: Uint16Array = (function () {
   const length = 256;
@@ -77,6 +76,6 @@ export function verify(buffer: DataView): void {
   buffer.setUint16(3, 0, true); // Zero the CRC before computing
   const crcComputed = compute(buffer);
   if (!(crcRecord === crcComputed)) {
-    throw new Error(`[LapRF Error] ${ErrorCode.CrcMismatch}`);
+    throw new Error(`[laprf] CRC mismatch`);
   }
 }
