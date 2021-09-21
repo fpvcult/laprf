@@ -1,8 +1,9 @@
 module.exports = {
   parser: '@typescript-eslint/parser', // Specifies the ESLint parser
-  plugins: ['jest', 'import', '@typescript-eslint'],
+  plugins: ['jest', 'import', 'prettier', '@typescript-eslint'],
   extends: [
     'eslint:recommended',
+    'plugin:prettier/recommended',
     'plugin:@typescript-eslint/recommended',
     'plugin:import/errors',
     'plugin:import/warnings',
@@ -43,6 +44,7 @@ module.exports = {
         'd.ts': 'never',
       },
     ],
+    'prettier/prettier': 'warn',
   },
   overrides: [
     {
