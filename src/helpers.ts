@@ -1,28 +1,9 @@
-/**
- * Copyright (C) 2021 copyright-holder John Hooks <bitmachina@outlook.com>
- * This file is part of @fpvcult/laprf.
- *
- * @fpvcult/laprf is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * @fpvcult/laprf is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with @fpvcult/laprf.  If not, see <https://www.gnu.org/licenses/>.
- *
- */
-
 import { SOR, EOR, ESC, ESC_OFFSET, MAX_RECORD_LEN } from './const';
 
 /**
  * Escape a LapRF record.
- * @param {Uint8Array} input The record to escape.
- * @returns {ArrayBuffer} The `input` with content escaped.
+ * @param input - The record to escape.
+ * @returns The `input` with content escaped.
  */
 export function escape(input: Uint8Array): ArrayBuffer {
   const output = new Uint8Array(MAX_RECORD_LEN);
@@ -44,8 +25,8 @@ export function escape(input: Uint8Array): ArrayBuffer {
 
 /**
  * Unescaped a LapRF packet.
- * @param {Uint8Array} input Raw record received from a LapRF.
- * @returns {DataView} The `input` with content unescaped.
+ * @param input - Raw record received from a LapRF.
+ * @returns The `input` with content unescaped.
  */
 export function unescape(input: Uint8Array): DataView {
   const output = new Uint8Array(MAX_RECORD_LEN);
@@ -79,8 +60,8 @@ export function unescape(input: Uint8Array): DataView {
 
 /**
  * Split a LapRF packet into individual records.
- * @param {DataView} buffer An LapRF packet.
- * @returns {DataView[]} The unescaped records contained in the `buffer`.
+ * @param buffer - An LapRF packet.
+ * @returns The unescaped records contained in the `buffer`.
  */
 export function splitRecords(view: DataView): DataView[] {
   const input = new Uint8Array(view.buffer, view.byteOffset, view.byteLength);

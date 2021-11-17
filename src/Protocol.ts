@@ -1,22 +1,3 @@
-/**
- * Copyright (C) 2021 copyright-holder John Hooks <bitmachina@outlook.com>
- * This file is part of @fpvcult/laprf.
- *
- * @fpvcult/laprf is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * @fpvcult/laprf is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with @fpvcult/laprf.  If not, see <https://www.gnu.org/licenses/>.
- *
- */
-
 import type { SlotIndex, DeviceRecord, RfSetupSlotInput, Maybe } from './types';
 import { Encoder } from './Encoder';
 import { Decoder } from './Decoder';
@@ -25,18 +6,31 @@ import { u8, u16, u32, f32 } from './Numbers';
 import { RecordType, RfSetupField, SettingsField, TimeField, EOR, SOR } from './const';
 import { splitRecords, unescape } from './helpers';
 
+/**
+ * The LapRF Protocol encoder and decoder.
+ * @public
+ */
 export class Protocol {
+  /**
+   * Boolean to determine whether or not to print debug messages.
+   */
   static DEBUG = false;
 
-  static SOR = SOR;
-  static EOR = EOR;
+  /**
+   * Start Of Record byte.
+   */
+  static readonly SOR = SOR;
+
+  /**
+   * End Of Record byte.
+   */
+  static readonly EOR = EOR;
 
   /**
    * Serialize a LapRF packet to request the `rtcTime`.
    *
-   * Requesting `rtcTime' requires an irregular packet.
-   * @static
-   * @returns {Uint8Array} An encoded packet to request `rtcTime'.
+   * Requesting `rtcTime` requires an irregular packet.
+   * @returns An encoded packet to request `rtcTime`.
    */
   static getRtcTime(): Uint8Array {
     return new Encoder(RecordType.time)
@@ -47,7 +41,7 @@ export class Protocol {
 
   /**
    * Serialize a LapRF packet to get the `minLapTime`.
-   * @returns {Uint8Array} An encoded packet to request `minLapTime'.
+   * @returns An encoded packet to request `minLapTime`.
    */
   static getMinLapTime(): Uint8Array {
     return new Encoder(RecordType.settings)
@@ -57,8 +51,8 @@ export class Protocol {
 
   /**
    * Serialize a LapRF packet to set the `minLapTime`.
-   * @param {number} milliseconds The number of milliseconds to set as the minimum lap time.
-   * @returns {Uint8Array} An encoded packet to set `minLapTime'.
+   * @param milliseconds - The number of milliseconds to set as the minimum lap time.
+   * @returns An encoded packet to set `minLapTime`.
    */
   static setMinLapTime(milliseconds: number): Uint8Array {
     return new Encoder(RecordType.settings)
@@ -68,8 +62,9 @@ export class Protocol {
 
   /**
    * Serialize a LapRF packet to get the `statusInterval`.
+   * @remarks
    * ISSUE: Requesting the status interval does not work.
-   * @returns {Uint8Array} An encoded packet to request `statusInterval'.
+   * @returns An encoded packet to request `statusInterval`.
    */
   // static getStatusInterval(): Uint8Array {
   //   return new Encoder(RecordType.settings)
@@ -79,8 +74,8 @@ export class Protocol {
 
   /**
    * Serialize a LapRF packet to set the `statusInterval`.
-   * @param {number} milliseconds The number of milliseconds to use as the status interval.
-   * @returns {Uint8Array} An encoded packet to set `statusInterval'.
+   * @param milliseconds - The number of milliseconds to use as the status interval.
+   * @returns An encoded packet to set `statusInterval`.
    */
   static setStatusInterval(milliseconds: number): Uint8Array {
     return new Encoder(RecordType.settings)
@@ -90,8 +85,8 @@ export class Protocol {
 
   /**
    * Serialize a LapRF packet to request the `rfSetup`.
-   * @param {SlotIndex} [slotId] Optionally request only a single slot.
-   * @returns {Uint8Array} An encoded packet to request `rfSetup'.
+   * @param slotId - Optionally request only a single slot.
+   * @returns An encoded packet to request `rfSetup`.
    */
   static getRfSetup(slotId?: SlotIndex): Uint8Array {
     const record = new Encoder(RecordType.rfSetup);
@@ -107,8 +102,8 @@ export class Protocol {
 
   /**
    * Serialize a LapRF packet to set a `rfSetup` slot.
-   * @param {RfSetupSlotInput} settings The options to configure the slot.
-   * @returns {Uint8Array} An encoded packet to set a `rfSetup' slot.
+   * @param settings - The options to configure the slot.
+   * @returns An encoded packet to set a `rfSetup` slot.
    */
   static setRfSetup({
     slotIndex,
@@ -133,8 +128,8 @@ export class Protocol {
 
   /**
    * Deserialize a LapRF Packet.
-   * @param {DataView} buffer The raw LapRF packet to deserialize.
-   * @returns {DeviceRecord[]} The deserialized records.
+   * @param buffer - The raw LapRF packet to deserialize.
+   * @returns The deserialized records.
    */
   static decode(buffer: DataView): DeviceRecord[] {
     const records: DeviceRecord[] = [];
@@ -156,8 +151,8 @@ export class Protocol {
 
   /**
    * Deserialize a LapRF record.
-   * @param {DataView} buffer An unescaped LapRF record to deserialize.
-   * @returns {DeviceRecord | undefined} The deserialized record.
+   * @param buffer - An unescaped LapRF record to deserialize.
+   * @returns The deserialized record or undefined.
    */
   static decodeRecord(buffer: DataView): Maybe<DeviceRecord> {
     return new Decoder(buffer, Protocol.DEBUG).decode();
@@ -165,8 +160,10 @@ export class Protocol {
 
   /**
    * Unescaped a LapRF record.
-   * @param {Uint8Array} input Raw record received from a LapRF.
-   * @returns {DataView} The `input` with content unescaped.
+   * @param input - Raw record received from a LapRF.
+   * @returns The `input` with content unescaped.
    */
-  static unescape = unescape;
+  static unescape(input: Uint8Array): DataView {
+    return unescape(input);
+  }
 }

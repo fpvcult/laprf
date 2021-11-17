@@ -1,9 +1,8 @@
 {
   "editor.tabSize": 2,
   "editor.insertSpaces": true,
-  "editor.renderWhitespace": "boundary",
-  "editor.rulers": [84],
   "editor.formatOnSave": true,
+  "files.associations": { "*.json": "jsonc" },
   "files.encoding": "utf8",
   "files.trimTrailingWhitespace": true,
   "files.insertFinalNewline": true,
@@ -11,6 +10,7 @@
     "**/node_modules": true
   },
   "search.exclude": {
+    "dist/**": true,
     "lib/**": true,
     "node_modules/**": true,
     "package-lock.json": true

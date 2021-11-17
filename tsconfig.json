@@ -15,7 +15,8 @@
     "module": "es2020",
     "moduleResolution": "node",
     "sourceMap": false,
-    "declaration": true
+    "declaration": true,
+    "outDir": "dist"
   },
   "include": ["src/**/*",],
   "exclude": ["lib", "node_modules", "**/*.test.ts"]

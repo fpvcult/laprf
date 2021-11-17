@@ -1,22 +1,3 @@
-/**
- * Copyright (C) 2021 copyright-holder John Hooks <bitmachina@outlook.com>
- * This file is part of @fpvcult/laprf.
- *
- * @fpvcult/laprf is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * @fpvcult/laprf is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with @fpvcult/laprf.  If not, see <https://www.gnu.org/licenses/>.
- *
- */
-
 import type {
   Maybe,
   SlotIndex,
@@ -52,8 +33,8 @@ export class Decoder {
 
   /**
    * Initialize a decoder of of a LapRF record.
-   * @param {ArrayBuffer|Uint8Array} buffer The byte array of the record to decode.
-   * @param {boolean} [debug] Log debug information.
+   * @param buffer - The byte array of the record to decode.
+   * @param debug Log debug information.
    */
   constructor(buffer: ArrayBuffer | Uint8Array | DataView, private debug = false) {
     if (isUint8Array(buffer)) {
@@ -69,6 +50,7 @@ export class Decoder {
 
   /**
    * Deserialize a LapRF record.
+   * @returns Maybe a DeviceRecord.
    */
   decode(): Maybe<DeviceRecord> {
     this.cursor.position = 1; // Skip SOR byte

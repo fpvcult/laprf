@@ -3,10 +3,12 @@
   "description": "A Node.js LapRF Protocol Library",
   "repository": "github:fpvcult/laprf",
   "version": "1.1.1",
-  "main": "./lib/cjs/index.js",
-  "module": "./lib/esm/index.js",
+  "main": "./dist/laprf.js",
+  "module": "./dist/esm/laprf.js",
+  "typings": "./dist/laprf.d.ts",
   "files": [
-    "lib/",
+    "dist/",
+    "COPYING.md",
     "README.md"
   ],
   "engines": {
@@ -14,9 +16,11 @@
   },
   "scripts": {
     "prebuild": "shx rm -rf dist",
-    "build": "npm run build:esm && npm run build:cjs",
-    "build:esm": "tsc --project tsconfig.json --outDir lib/esm",
-    "build:cjs": "tsc --project tsconfig-cjs.json --outDir lib/cjs",
+    "build": "npm run build:tsc && npm run build:cjs && npm run build:esm && npm run extract-api",
+    "extract-api": "npm run build:cjs && api-extractor run --local --verbose",
+    "build:esm": "rollup -c --file dist/esm/laprf.js --format esm",
+    "build:cjs": "rollup -c",
+    "build:tsc": "tsc --project tsconfig-cjs.json --outDir lib",
     "lint": "tsc --noEmit && eslint '*/**/*.{js,ts,tsx}' --quiet --fix",
     "lint:nofix": "tsc --noEmit && eslint '*/**/*.{js,ts,tsx}' --quiet",
     "prepare": "npm run lint:nofix && npm run test && npm run build",
@@ -30,6 +34,11 @@
   "author": "John Hooks <bitmachina@outlook.com>",
   "license": "GPL-3.0",
   "devDependencies": {
+    "@microsoft/api-documenter": "^7.13.68",
+    "@microsoft/api-extractor": "^7.18.19",
+    "@rollup/plugin-commonjs": "^21.0.1",
+    "@rollup/plugin-node-resolve": "^13.0.6",
+    "@rollup/plugin-typescript": "^8.3.0",
     "@types/jest": "^27.0.2",
     "@typescript-eslint/eslint-plugin": "4.33.0",
     "@typescript-eslint/parser": "^4.33.0",
@@ -39,6 +48,7 @@
     "eslint-plugin-jest": "^24.7.0",
     "eslint-plugin-prettier": "^4.0.0",
     "jest": "^27.3.1",
+    "rollup": "^2.60.0",
     "shx": "^0.3.3",
     "ts-jest": "^27.0.7",
     "typescript": "^4.4.4"

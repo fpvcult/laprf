@@ -1,25 +1,9 @@
-/**
- * Copyright (C) 2021 copyright-holder John Hooks <bitmachina@outlook.com>
- * This file is part of @fpvcult/laprf.
- *
- * @fpvcult/laprf is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * @fpvcult/laprf is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with @fpvcult/laprf.  If not, see <https://www.gnu.org/licenses/>.
- *
- */
-
 import type { NumberType } from './types';
 import { isArrayBuffer, isDataView } from './helpers';
 
+/**
+ * Cursor to keep track of position while writing or reading from a buffer.
+ */
 export default class Cursor {
   private _view: DataView;
   private _position = 0;
@@ -36,7 +20,7 @@ export default class Cursor {
   }
 
   /**
-   * @type {boolean} Little Endian
+   * Configure cursor to read and write Little Endian
    */
   get LE(): boolean {
     return this._littleEndian;
@@ -46,7 +30,7 @@ export default class Cursor {
     this._littleEndian = value;
   }
   /**
-   * @type {boolean} Big Endian
+   * Configure cursor to read and write Big Endian
    */
   get BE(): boolean {
     return !this._littleEndian;
@@ -57,14 +41,14 @@ export default class Cursor {
   }
 
   /**
-   * @type {number} The number of bytes left until the end of the internal DataView.
+   * The number of bytes left until the end of the internal DataView.
    */
   get bytesLeft(): number {
     return this._view.byteLength - this._position;
   }
 
   /**
-   * @type {number} The current position of the cursor.
+   * The current position of the cursor.
    */
   get position(): number {
     return this._position;
@@ -81,31 +65,31 @@ export default class Cursor {
   }
 
   /**
-   * @type {number} The internal buffer's byteLength.
+   * The internal buffer's byteLength.
    */
   get byteLength(): number {
     return this._view.byteLength;
   }
 
   /**
-   * @type {DataView} A reference to the internal DataView.
+   * A reference to the internal DataView.
    */
   get view(): DataView {
     return this._view;
   }
 
   /**
-   * @param {number} [begin] Default is 0, inclusive.
-   * @param {number} [end] Default is the current cursor position, exclusive.
-   * @returns {Uint8Array} A new view of the internal ArrayBuffer.
+   * @param begin - Default is 0, inclusive.
+   * @param number - Default is the current cursor position, exclusive.
+   * @returns A new view of the internal ArrayBuffer.
    */
   toUint8Array(begin = 0, end = this._position): Uint8Array {
     return new Uint8Array(this._view.buffer, this._view.byteOffset + begin, end);
   }
 
   /**
-   * @param {number} [begin] Default is 0, inclusive.
-   * @param {number} [end] Default is the current cursor position, exclusive.
+   * @param begin - Default is 0, inclusive.
+   * @param end - Default is the current cursor position, exclusive.
    * @returns {DataView} A new view of the internal ArrayBuffer.
    */
   toDataView(begin = 0, end = this._position): DataView {
@@ -113,9 +97,9 @@ export default class Cursor {
   }
 
   /**
-   * @param {number} [begin] Default is 0, inclusive.
-   * @param {number} [end] Default is the current cursor position, exclusive.
-   * @returns {Cursor} Contents of the Cursor are copied into a new ArrayBuffer.
+   * @param begin - Default is 0, inclusive.
+   * @param end - Default is the current cursor position, exclusive.
+   * @returns Contents of the Cursor are copied into a new ArrayBuffer.
    */
   slice(begin = 0, end = this._position): Cursor {
     // Use ArrayBuffer#slice to create a copy of the buffer.
@@ -129,8 +113,8 @@ export default class Cursor {
   }
 
   /**
-   * @param {number} byteCount The number of bytes to skip.
-   * @returns {Cursor} this
+   * @param byteCount - The number of bytes to skip.
+   * @returns this
    */
   skip(byteCount: number): this {
     this._position += byteCount;
@@ -139,7 +123,7 @@ export default class Cursor {
 
   /**
    * Read an 8 bit unsigned integer from the internal buffer.
-   * @returns {number} uint8
+   * @returns uint8
    */
   readUint8(): number {
     const value = this._view.getUint8(this._position);
@@ -149,7 +133,7 @@ export default class Cursor {
 
   /**
    * Read a 16 bit unsigned integer from the internal buffer.
-   * @returns {number} uint16
+   * @returns uint16
    */
   readUint16(): number {
     const value = this._view.getUint16(this._position, this._littleEndian);
@@ -159,7 +143,7 @@ export default class Cursor {
 
   /**
    * Read a 32 bit unsigned integer from the internal buffer.
-   * @returns {number} uint32
+   * @returns uint32
    */
   readUint32(): number {
     const value = this._view.getUint32(this._position, this._littleEndian);
@@ -169,7 +153,7 @@ export default class Cursor {
 
   /**
    * Read a 64 bit unsigned integer from the internal buffer.
-   * @returns {number} uint64
+   * @returns uint64
    */
   readUint64(): number {
     const { _position: position, _littleEndian: isLittleEndian } = this;
@@ -189,7 +173,7 @@ export default class Cursor {
 
   /**
    * Read a 32 bit floating point number from the internal buffer.
-   * @returns {number} float32
+   * @returns float32
    */
   readFloat32(): number {
     const value = this._view.getFloat32(this._position, this._littleEndian);
@@ -199,7 +183,7 @@ export default class Cursor {
 
   /**
    * Read a 64 bit floating point number from the internal buffer.
-   * @returns {number} float64
+   * @returns float64
    */
   readFloat64(): number {
     const value = this._view.getFloat64(this._position, this._littleEndian);
@@ -209,8 +193,8 @@ export default class Cursor {
 
   /**
    * Write a 8 bit unsigned integer to the internal buffer.
-   * @param {number} value
-   * @returns {number} The position of the cursor after the operation.
+   * @param value - The value to write to the buffer.
+   * @returns The position of the cursor after the operation.
    */
   writeUint8(value: number): number {
     this._view.setUint8(this._position, value);
@@ -219,8 +203,8 @@ export default class Cursor {
 
   /**
    * Write a 16 bit unsigned integer to the internal buffer.
-   * @param {number} value
-   * @returns {number} The position of the cursor after the operation.
+   * @param value - The value to write to the buffer.
+   * @returns - The position of the cursor after the operation.
    */
   writeUint16(value: number): number {
     this._view.setUint16(this._position, value, this._littleEndian);
@@ -229,8 +213,8 @@ export default class Cursor {
 
   /**
    * Write a 32 bit unsigned integer to the internal buffer.
-   * @param {number} value
-   * @returns {number} The position of the cursor after the operation.
+   * @param value - The value to write to the buffer.
+   * @returns The position of the cursor after the operation.
    */
   writeUint32(value: number): number {
     this._view.setUint32(this._position, value, this._littleEndian);
@@ -239,8 +223,8 @@ export default class Cursor {
 
   /**
    * Write a 64 bit unsigned integer to the internal buffer.
-   * @param {number} value
-   * @returns {number} The position of the cursor after the operation.
+   * @param value - The value to write to the buffer.
+   * @returns The position of the cursor after the operation.
    */
   writeUint64(value: number): number {
     this._view.setBigUint64(this._position, BigInt(value), this._littleEndian);
@@ -249,8 +233,8 @@ export default class Cursor {
 
   /**
    * Write a 32 bit floating point number from the internal buffer.
-   * @param {number} value
-   * @returns {number} The position of the cursor after the operation.
+   * @param value - The value to write to the buffer.
+   * @returns The position of the cursor after the operation.
    */
   writeFloat32(value: number): number {
     this._view.setFloat32(this._position, value, this._littleEndian);
@@ -259,8 +243,8 @@ export default class Cursor {
 
   /**
    * Write a 64 bit floating point number to the internal buffer.
-   * @param {number} value
-   * @returns {number} The position of the cursor after the operation.
+   * @param value - The value to write to the buffer.
+   * @returns The position of the cursor after the operation.
    */
   writeFloat64(value: number): number {
     this._view.setFloat64(this._position, value, this._littleEndian);
@@ -269,9 +253,9 @@ export default class Cursor {
 
   /**
    * Write a typed number from the internal buffer.
-   * @param {NumberType} type The number type of `value`.
-   * @param {number} value The value to be written to the buffer.
-   * @returns {this}
+   * @param type - The number type of `value`.
+   * @param value - The value to be written to the buffer.
+   * @returns
    */
   write(type: NumberType, value: number): this {
     type.write.call(this._view, this._position, value, this._littleEndian);
@@ -281,8 +265,8 @@ export default class Cursor {
 
   /**
    * Read a typed number from the internal buffer.
-   * @param {NumberType} type The number type to read from the buffer.
-   * @returns {number} The value read from the buffer.
+   * @param type - The number type to read from the buffer.
+   * @returns The value read from the buffer.
    */
   read(type: NumberType): number {
     const value = type.read.call(this._view, this._position, this._littleEndian);

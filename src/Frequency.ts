@@ -1,22 +1,3 @@
-/**
- * Copyright (C) 2021 copyright-holder John Hooks <bitmachina@outlook.com>
- * This file is part of @fpvcult/laprf.
- *
- * @fpvcult/laprf is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * @fpvcult/laprf is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with @fpvcult/laprf.  If not, see <https://www.gnu.org/licenses/>.
- *
- */
-
 import type { Channel, ChannelName, BandIndex, ChannelIndex } from './types';
 
 const bandOrder = 'FREBA';
@@ -58,8 +39,21 @@ for (let i = 0; i < order.length; i++) {
   }
 }
 
+/**
+ * FPV radio frequency lookup singleton.
+ * @public
+ */
 export class Frequency {
+  /**
+   * Lookup {@link Channel} by {@link ChannelName}.
+   * @param name - A two character channel name.
+   */
   static get(name: ChannelName): Channel;
+  /**
+   * Lookup {@link Channel} by {@link BandIndex} and {@link ChannelIndex}.
+   * @param band - The band index of the channel.
+   * @param channel - The channel index of the channel.
+   */
   static get(band: BandIndex, channel: ChannelIndex): Channel;
   static get(arg1: ChannelName | BandIndex, arg2?: ChannelIndex): Channel {
     if (typeof arg1 === 'string') {
@@ -71,17 +65,32 @@ export class Frequency {
     throw new Error(`[laprf-freq] Invalid arguments, provided: ${arg1}, ${arg2}`);
   }
 
+  /**
+   * Lookup a channel by indexes.
+   * @param band - The band index.
+   * @param channel - The channel index.
+   * @returns A single Channel.
+   */
   static getByIndexes(band: BandIndex, channel: ChannelIndex): Channel {
     const index = (band - 1) * 8 + (channel - 1);
     return byNameOrIndex[index];
   }
 
+  /**
+   * Lookup a channel by indexes.
+   * @param frequency - The radio channel frequency.
+   * @returns A single Channel, a list of Channels or undefined.
+   */
   static getByFrequency(frequency: number): Channel | Channel[] | undefined {
     const channels = byFrequency[frequency];
     if (channels !== undefined && channels.length === 1) return channels[0];
     return channels;
   }
 
+  /**
+   * Get a list of all Channels.
+   * @returns A list of all Channels.
+   */
   static getAll(): Channel[] {
     return [...ordered];
   }

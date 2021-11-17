@@ -1,0 +1,8 @@
+coverage
+node_modules
+lib
+dist
+temp
+build
+website
+**/*.md
